@@ -8,112 +8,292 @@
  },
  "rates": [
   {
+   "date": "2026-08-18",
+   "mcx": 346.9,
+   "low": 345.9,
+   "high": 352.65,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-19",
+   "mcx": 347.8,
+   "low": 344.7,
+   "high": 348.4,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-20",
+   "mcx": 345.5,
+   "low": 345.0,
+   "high": 347.85,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-21",
+   "mcx": 347.9,
+   "low": 343.35,
+   "high": 348.45,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-24",
+   "mcx": 345.9,
+   "low": 345.3,
+   "high": 349.15,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-25",
+   "mcx": 348.0,
+   "low": 342.55,
+   "high": 348.2,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-26",
+   "mcx": 345.5,
+   "low": 345.0,
+   "high": 348.4,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-27",
+   "mcx": 345.5,
+   "low": 343.55,
+   "high": 347.5,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-28",
+   "mcx": 346.45,
+   "low": 344.75,
+   "high": 346.9,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-08-31",
+   "mcx": 347.9,
+   "low": 344.5,
+   "high": 349.2,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-01",
+   "mcx": 347.6,
+   "low": 345.5,
+   "high": 348.65,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-02",
+   "mcx": 348.4,
+   "low": 345.0,
+   "high": 348.85,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-03",
+   "mcx": 351.15,
+   "low": 347.05,
+   "high": 351.7,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-04",
+   "mcx": 348.45,
+   "low": 348.0,
+   "high": 351.2,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-07",
+   "mcx": 350.25,
+   "low": 347.55,
+   "high": 351.0,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-08",
+   "mcx": 353.75,
+   "low": 350.6,
+   "high": 354.8,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-09",
+   "mcx": 356.4,
+   "low": 352.35,
+   "high": 356.85,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-09-10",
+   "mcx": 350.25,
+   "low": 349.5,
+   "high": 357.4,
+   "contract": "30 Sep 2026 (Mini)",
+   "source": "Upstox"
+  },
+  {
    "date": "2026-09-30",
    "mcx": 340.65,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 339.1,
+   "high": 344.8
   },
   {
    "date": "2026-10-01",
    "mcx": 336.6,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 335.9,
+   "high": 340.1
   },
   {
    "date": "2026-10-05",
    "mcx": 338.5,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 333.2,
+   "high": 338.9
   },
   {
    "date": "2026-10-06",
    "mcx": 341.4,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 338.7,
+   "high": 341.8
   },
   {
    "date": "2026-10-07",
    "mcx": 339.65,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 338.5,
+   "high": 342.1
   },
   {
    "date": "2026-10-08",
    "mcx": 333.45,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 332.75,
+   "high": 341.0
   },
   {
    "date": "2026-10-09",
    "mcx": 335.35,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 334.1,
+   "high": 338.55
   },
   {
    "date": "2026-10-12",
    "mcx": 331.6,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 330.35,
+   "high": 333.35
   },
   {
    "date": "2026-10-13",
    "mcx": 324.8,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 324.0,
+   "high": 330.5
   },
   {
    "date": "2026-10-14",
    "mcx": 320.25,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 318.85,
+   "high": 327.15
   },
   {
    "date": "2026-10-15",
    "mcx": 322.95,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 315.45,
+   "high": 324.1
   },
   {
    "date": "2026-10-16",
    "mcx": 324.95,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 323.05,
+   "high": 326.7
   },
   {
    "date": "2026-10-19",
    "mcx": 327.15,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 321.1,
+   "high": 327.65
   },
   {
    "date": "2026-10-20",
    "mcx": 326.4,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 322.0,
+   "high": 326.7
   },
   {
    "date": "2026-10-21",
    "mcx": 324.95,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 323.2,
+   "high": 326.9
   },
   {
    "date": "2026-10-22",
    "mcx": 323.1,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 322.25,
+   "high": 325.0
   },
   {
    "date": "2026-10-23",
    "mcx": 327.55,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 322.55,
+   "high": 328.0
   },
   {
    "date": "2026-10-26",
    "mcx": 329.35,
    "contract": "30 Oct 2026",
-   "source": "Upstox"
+   "source": "Upstox",
+   "low": 325.2,
+   "high": 330.25
   },
   {
    "date": "2026-10-27",
@@ -203,7 +383,9 @@
    "date": "2026-11-13",
    "mcx": 327.25,
    "contract": "30 Nov 2026",
-   "source": "Dhan"
+   "source": "Dhan",
+   "low": 326.15,
+   "high": 329.3
   }
  ],
  "quotes": [

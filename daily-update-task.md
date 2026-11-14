@@ -35,5 +35,6 @@ recorded as failed. Prices are never estimated or carried forward.
 
 ## What it writes
 
-- `rates/<YYYY-MM-DD>`: `{date, mcx, contract, source, loggedBy: "auto"}`
+- `rates/<YYYY-MM-DD>`: `{date, mcx, contract, source, loggedBy: "auto"}`, plus `low` and
+  `high` (the day's low and high) when a dated source shows them for that trade date
 - `status/lastRun`: `{at, ok, message}`

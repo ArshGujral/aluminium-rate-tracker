@@ -107,6 +107,11 @@ button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
 .art-pill.is-buy { color: var(--good); border-color: var(--good); background: var(--good-soft); }
 .art-pill.is-wait { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
 .art-pill.is-hold { color: var(--ink); }
+.art-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.art-stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.art-stat-val { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.art-log-head, .c-range { display: none; }
+.art-tag.is-mark { border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 6px; }
 .art-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .art-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .art-sec { display: flex; flex-direction: column; gap: 12px; }
@@ -167,7 +172,24 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   #q-save { width: 100%; }
   th, td { padding: 10px 8px; }
   th { letter-spacing: 0.03em; }
-  .is-opt { display: none; }
+  .is-opt, .c-low, .c-high { display: none; }
+  .art-stat { padding: 10px 12px; }
+  .art-log-head, table.is-log tr { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.9fr); column-gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+  .art-log-head { font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .art-log-head span { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+  .art-log-head span:first-child { text-align: left; }
+  .art-log-head small { font-size: 0.72rem; font-weight: 500; text-transform: none; letter-spacing: 0; }
+  table.is-log thead { display: none; }
+  table.is-log, table.is-log tbody { display: block; }
+  table.is-log tr { grid-template-areas: "date mcx fin" "range chg ex"; row-gap: 2px; }
+  table.is-log tr:last-child { border-bottom: 0; }
+  table.is-log td { padding: 0; border: 0; text-align: right; min-width: 0; }
+  table.is-log td.c-date { grid-area: date; text-align: left; font-weight: 600; }
+  table.is-log td.c-range { display: block; grid-area: range; text-align: left; font-size: 0.8rem; color: var(--muted); }
+  table.is-log td.c-mcx { grid-area: mcx; font-weight: 600; }
+  table.is-log td.c-chg { grid-area: chg; font-size: 0.8rem; }
+  table.is-log td.c-fin { grid-area: fin; font-weight: 600; color: var(--accent); }
+  table.is-log td.c-ex { grid-area: ex; font-size: 0.8rem; color: var(--muted); }
   table.is-cards thead { display: none; }
   table.is-cards, table.is-cards tbody, table.is-cards tr { display: block; }
   table.is-cards tr { padding: 10px 14px; border-bottom: 1px solid var(--line); }
@@ -271,19 +293,22 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   </section>
 
   <section class="art-sec" id="log-sec">
-    <div class="art-sec-head">
-      <h2>Daily log</h2>
-      <button type="button" class="is-small" id="show-all" hidden>Show all</button>
+    <div class="art-sec-head"><h2>Daily log</h2><p class="art-hint" id="log-span"></p></div>
+    <div class="art-stats" id="log-stats" hidden>
+      <div class="art-stat"><span class="art-label">Lowest close</span><span class="art-stat-val" id="lo-val"></span><span class="art-meta" id="lo-meta"></span></div>
+      <div class="art-stat"><span class="art-label">Highest close</span><span class="art-stat-val" id="hi-val"></span><span class="art-meta" id="hi-meta"></span></div>
     </div>
     <div class="art-scroll" id="log-wrap" hidden>
-      <table>
+      <div class="art-log-head" aria-hidden="true"><span>Date<small>Day low – high</small></span><span>MCX close<small>Change</small></span><span>With tax<small>Before tax</small></span></div>
+      <table class="is-log">
         <thead><tr>
-          <th>Date</th><th>MCX close</th><th class="is-opt">Change</th><th>Before tax</th><th>With tax</th><th class="is-text is-opt">Contract</th><th class="is-text is-opt">Source</th>
+          <th>Date</th><th>Day low</th><th>Day high</th><th>MCX close</th><th>Change</th><th>Before tax</th><th>With tax</th><th class="is-text is-opt">Contract</th><th class="is-text is-opt">Source</th>
         </tr></thead>
         <tbody id="log-rows"></tbody>
       </table>
     </div>
     <p class="art-empty" id="log-empty">No rates logged yet.</p>
+    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them.</p>
   </section>
 
   <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg. This is a reference for costing and negotiation, not a live quote.</p>
@@ -383,18 +408,20 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     } else t.textContent = S.rates.length ? S.rates.length + ' daily rates logged.' : 'Waiting for the first daily update.';
   }
 
+  // The period shown by both the chart and the daily log. A range is offered only when it would show less than the whole history.
+  function rangeView() {
+    var all = S.rates, range = S.range, hide = {}, pts = all;
+    function cutFor(r) { var c = parseD(all[all.length - 1].date); c.setMonth(c.getMonth() - (r === '1M' ? 1 : 3)); return iso(c); }
+    ['1M', '3M'].forEach(function (r) { if (!all.length || all[0].date >= cutFor(r)) { hide[r] = true; if (range === r) range = 'ALL'; } });
+    if (all.length && range !== 'ALL') { var cut = cutFor(range); pts = all.filter(function (p) { return p.date >= cut; }); }
+    return { pts: pts, range: range, hide: hide };
+  }
+
   function renderChart() {
     var box = $('chart'), old = box.querySelector('svg'), tipOld = box.querySelector('.art-tip');
     if (old) old.remove(); if (tipOld) tipOld.remove();
-    var pts = S.rates, range = S.range;
-    function cutFor(r) { var c = parseD(pts[pts.length - 1].date); c.setMonth(c.getMonth() - (r === '1M' ? 1 : 3)); return iso(c); }
-    // A range button is offered only when it would show less than the whole history.
-    document.querySelectorAll('[data-range]').forEach(function (b) {
-      var r = b.getAttribute('data-range'), same = r !== 'ALL' && (!pts.length || pts[0].date >= cutFor(r));
-      b.hidden = same; if (same && range === r) range = 'ALL';
-    });
-    document.querySelectorAll('[data-range]').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-range') === range); });
-    if (pts.length && range !== 'ALL') { var cut = cutFor(range); pts = pts.filter(function (p) { return p.date >= cut; }); }
+    var V = rangeView(), pts = V.pts;
+    document.querySelectorAll('[data-range]').forEach(function (b) { var r = b.getAttribute('data-range'); b.hidden = !!V.hide[r]; b.classList.toggle('is-on', r === V.range); });
     if (pts.length < 2) { $('chart-empty').hidden = false; $('gap-note').hidden = true; return; }
     $('chart-empty').hidden = true;
     var W = Math.max(280, box.clientWidth - 16), H = W < 460 ? 220 : 250, m = { l: 46, r: 58, t: 14, b: 26 };
@@ -488,14 +515,26 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   }
 
   function renderLog() {
-    var body = $('log-rows'), n = S.rates.length, max = S.showAll ? n : Math.min(n, 30), i;
+    var body = $('log-rows'), pts = rangeView().pts, n = pts.length, i;
     body.replaceChildren();
-    $('log-wrap').hidden = !n; $('log-empty').hidden = !!n || !S.ratesLoaded;
-    $('show-all').hidden = n <= 30; $('show-all').textContent = S.showAll ? 'Show latest 30' : 'Show all ' + n;
-    for (i = n - 1; i >= n - max; i--) {
-      var r = S.rates[i], p = i > 0 ? S.rates[i - 1] : null;
-      body.append(el('tr', null, el('td', { text: fmtD(r.date) }), el('td', { text: num(r.mcx) }),
-        el('td', { class: 'is-opt', text: p ? signed(r.mcx - p.mcx) : '—' }), el('td', { text: num(exTax(r.mcx)) }), el('td', { text: whole(fin(r.mcx)) }),
+    $('log-wrap').hidden = !n; $('log-stats').hidden = !n; $('log-empty').hidden = !!n || !S.ratesLoaded;
+    if (!n) { $('log-span').textContent = ''; return; }
+    var lo = pts[0], hi = pts[0];
+    pts.forEach(function (p) { if (p.mcx < lo.mcx) lo = p; if (p.mcx > hi.mcx) hi = p; });
+    $('log-span').textContent = fmtD(pts[0].date) + ' to ' + fmtD(pts[n - 1].date) + ' \u00b7 ' + n + ' days';
+    $('lo-val').textContent = num(lo.mcx); $('lo-meta').textContent = fmtD(lo.date) + ' \u00b7 with tax ' + whole(fin(lo.mcx));
+    $('hi-val').textContent = num(hi.mcx); $('hi-meta').textContent = fmtD(hi.date) + ' \u00b7 with tax ' + whole(fin(hi.mcx));
+    for (i = n - 1; i >= 0; i--) {
+      var r = pts[i], k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
+      var d = el('td', { class: 'c-date', text: fmtD(r.date) }), both = okNum(r.low) && okNum(r.high);
+      if (n > 1 && r === lo) d.append(el('span', { class: 'art-tag is-mark', text: 'Low' }));
+      if (n > 1 && r === hi) d.append(el('span', { class: 'art-tag is-mark', text: 'High' }));
+      body.append(el('tr', null, d,
+        el('td', { class: 'c-low', text: okNum(r.low) ? num(r.low) : '\u2014' }), el('td', { class: 'c-high', text: okNum(r.high) ? num(r.high) : '\u2014' }),
+        el('td', { class: 'c-range', text: both ? num(r.low) + ' \u2013 ' + num(r.high) : '' }),
+        el('td', { class: 'c-mcx', text: num(r.mcx) }),
+        el('td', { class: 'c-chg' + (ch == null || Math.abs(ch) < 0.005 ? '' : ch > 0 ? ' is-over' : ' is-under'), text: ch == null ? '\u2014' : signed(ch) }),
+        el('td', { class: 'c-ex', text: num(exTax(r.mcx)) }), el('td', { class: 'c-fin', text: whole(fin(r.mcx)) }),
         el('td', { class: 'is-text is-opt', text: r.contract || '' }), el('td', { class: 'is-text is-opt', text: r.source || '' })));
     }
   }
@@ -525,7 +564,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     localQuotes(); renderAll(); return Promise.resolve();
   }
 
-  document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); }); });
+  document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); renderLog(); }); });
   try { var sg = localStorage.getItem('gauge'); if (sg === '33' || sg === '38') S.gauge = sg; } catch (e) {}
   document.querySelectorAll('[data-gauge]').forEach(function (b) { b.addEventListener('click', function () { S.gauge = b.getAttribute('data-gauge'); try { localStorage.setItem('gauge', S.gauge); } catch (e) {} renderAll(); }); });
   var root = document.documentElement;
@@ -534,7 +573,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   try { var st = localStorage.getItem('theme'); if (st === 'light' || st === 'dark') root.setAttribute('data-theme', st); } catch (e) {}
   $('theme-btn').addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next); try { localStorage.setItem('theme', next); } catch (e) {} themeLabel(); });
   themeLabel();
-  $('show-all').addEventListener('click', function () { S.showAll = !S.showAll; renderLog(); });
   $('q-date').value = iso(new Date());
 
   var saving = false;
@@ -590,7 +628,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     var timer = setTimeout(function () { if (!S.ratesLoaded) $('status').textContent = 'The saved rates cannot be reached yet. Still trying…'; }, 10000);
     function dead() { clearTimeout(timer); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
     db.collection('rates').onSnapshot(function (snap) {
-      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
+      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, low: x.low, high: x.high, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
         .filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
       if (!snap.metadata || !snap.metadata.fromCache) clearTimeout(timer);
       S.ratesLoaded = true; renderAll();
