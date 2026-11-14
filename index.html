@@ -334,7 +334,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <div class="art-scroll" id="quote-wrap" hidden>
       <table class="is-cards">
         <thead><tr>
-          <th>Date</th><th class="is-text">Supplier</th><th class="is-text">Gauge</th><th>Quote ex-tax</th><th>MCX</th><th>Markup over MCX</th>
+          <th>Date</th><th class="is-text">Supplier</th><th class="is-text">Gauge</th><th>Quote ex-tax</th><th>Quote with tax</th><th>MCX</th><th>Markup over MCX</th>
           <th>Formula ex-tax</th><th>Quote − formula</th><th class="is-text">Note</th><th></th>
         </tr></thead>
         <tbody id="quote-rows"></tbody>
@@ -541,7 +541,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     $('quote-wrap').hidden = !qs.length; $('quote-empty').hidden = !!qs.length;
     qs.forEach(function (q) {
       var own = okNum(q.mcxAtQuote), r = own ? null : rateOn(q.date), mcx = quoteMcx(q);
-      var tr = el('tr', null, td('Date', fmtD(q.date)), td('Supplier', q.supplier || '\u2014', 'is-text'), td('Gauge', q.gauge === '32' ? 'Up to 32' : q.gauge + ' SWG', 'is-text'), td('Quote ex-tax', num(q.rate)));
+      var tr = el('tr', null, td('Date', fmtD(q.date)), td('Supplier', q.supplier || '\u2014', 'is-text'), td('Gauge', q.gauge === '32' ? 'Up to 32' : q.gauge + ' SWG', 'is-text'), td('Quote ex-tax', num(q.rate)), td('Quote with tax', num(q.rate * (1 + S.cfg.taxPct / 100))));
       if (mcx == null) { tr.append(td('MCX', '\u2014'), td('Markup over MCX', '\u2014'), td('Formula ex-tax', '\u2014'), td('Quote \u2212 formula', '\u2014')); }
       else {
         var diff = q.rate - exTax(mcx, q.gauge), prem = q.rate - mcx;
