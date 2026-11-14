@@ -1,0 +1,141 @@
+{
+ "updatedAt": "2026-11-14",
+ "config": {
+  "markupPct": 33,
+  "taxPct": 9,
+  "markup33": 34.53,
+  "markup38": 62.6
+ },
+ "rates": [
+  {
+   "date": "2026-09-30",
+   "mcx": 340.65,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-01",
+   "mcx": 336.6,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-05",
+   "mcx": 338.5,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-06",
+   "mcx": 341.4,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-07",
+   "mcx": 339.65,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-08",
+   "mcx": 333.45,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-09",
+   "mcx": 335.35,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-12",
+   "mcx": 331.6,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-13",
+   "mcx": 324.8,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-14",
+   "mcx": 320.25,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-15",
+   "mcx": 322.95,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-16",
+   "mcx": 324.95,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-19",
+   "mcx": 327.15,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-20",
+   "mcx": 326.4,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-21",
+   "mcx": 324.95,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-22",
+   "mcx": 323.1,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-23",
+   "mcx": 327.55,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-10-26",
+   "mcx": 329.35,
+   "contract": "30 Oct 2026",
+   "source": "Upstox"
+  },
+  {
+   "date": "2026-11-12",
+   "mcx": 329.1,
+   "contract": "30 Nov 2026",
+   "source": "Dhan"
+  },
+  {
+   "date": "2026-11-13",
+   "mcx": 327.25,
+   "contract": "30 Nov 2026",
+   "source": "Dhan"
+  }
+ ],
+ "quotes": [
+  {
+   "date": "2026-10-23",
+   "supplier": "",
+   "rate": 430,
+   "mcxAtQuote": 323.7,
+   "note": "32 SWG, rate you shared in chat",
+   "id": "q-2026-10-23-a"
+  }
+ ]
+}
