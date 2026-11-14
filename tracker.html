@@ -1,0 +1,517 @@
+<title>Aluminium Rate Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one working column. The rate formula reads left to right as an equation strip
+   (MCX close, plus markup, plus tax), then the price chart, supplier quotes, and the daily log. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #17212b;
+  --muted: #5a6876;
+  --line: #d3dae1;
+  --accent: #0d6b8c;
+  --accent-soft: rgba(13, 107, 140, 0.12);
+  --good: #1f7a4d;
+  --good-soft: rgba(31, 122, 77, 0.1);
+  --warn: #a8540a;
+  --warn-soft: rgba(168, 84, 10, 0.1);
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --surface: #18212a; --ink: #e5ebf1; --muted: #93a2b0; --line: #2b3743;
+    --accent: #55b6dc; --accent-soft: rgba(85, 182, 220, 0.16);
+    --good: #5fc291; --good-soft: rgba(95, 194, 145, 0.14); --warn: #e3a056; --warn-soft: rgba(227, 160, 86, 0.14);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #18212a; --ink: #e5ebf1; --muted: #93a2b0; --line: #2b3743;
+  --accent: #55b6dc; --accent-soft: rgba(85, 182, 220, 0.16);
+  --good: #5fc291; --good-soft: rgba(95, 194, 145, 0.14); --warn: #e3a056; --warn-soft: rgba(227, 160, 86, 0.14);
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.art-page {
+  max-width: 980px; margin: 0 auto;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 28px;
+}
+.art-head { display: flex; flex-direction: column; gap: 4px; }
+.art-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+.art-head h1 {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1.2;
+  margin: 0; text-wrap: balance;
+}
+.art-sub { color: var(--muted); margin: 0; }
+.art-status { color: var(--muted); font-size: 0.87rem; margin: 0; }
+.art-note {
+  border: 1px solid var(--warn); background: var(--warn-soft); color: var(--ink);
+  border-radius: var(--radius); padding: 10px 14px; font-size: 0.92rem; margin: 0;
+}
+.art-eq {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  display: flex; flex-wrap: wrap; align-items: stretch;
+}
+.art-term { flex: 1 1 200px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+.art-term + .art-term { border-left: 1px solid var(--line); }
+.art-label { font-size: 0.74rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.art-big {
+  font-family: var(--font-display); font-weight: 600; font-size: 2.1rem; line-height: 1.15;
+  font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+}
+.art-big small { font-size: 0.95rem; font-weight: 500; color: var(--muted); font-family: var(--font-body); }
+.art-term.is-final .art-big { color: var(--accent); }
+.art-meta { color: var(--muted); font-size: 0.87rem; }
+.art-pct { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.art-pct input { width: 74px; }
+input, button, select { font: inherit; color: inherit; }
+input[type="number"], input[type="text"], input[type="date"], select {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px;
+  min-width: 0; max-width: 100%;
+}
+input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 7px 13px;
+  cursor: pointer; font-weight: 500;
+}
+button:hover { border-color: var(--accent); }
+button.is-primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+button.is-small { padding: 3px 9px; font-size: 0.82rem; }
+button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
+.art-signal {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.art-signal-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.art-pill {
+  display: inline-block; padding: 4px 13px; border-radius: 999px; font-weight: 600;
+  border: 1px solid var(--line); color: var(--muted);
+}
+.art-pill.is-buy { color: var(--good); border-color: var(--good); background: var(--good-soft); }
+.art-pill.is-wait { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+.art-pill.is-hold { color: var(--ink); }
+.art-sec { display: flex; flex-direction: column; gap: 12px; }
+.art-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.art-sec h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin: 0; }
+.art-hint { color: var(--muted); font-size: 0.87rem; margin: 0; max-width: 65ch; }
+.art-range { display: flex; flex-wrap: wrap; gap: 6px; }
+.art-gauge { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: -14px; }
+.art-chart {
+  position: relative; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 8px 6px;
+}
+.art-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.art-chart text { font-family: var(--font-body); font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.art-tip {
+  position: absolute; top: 10px; pointer-events: none; background: var(--ink); color: var(--bg);
+  border-radius: 7px; padding: 7px 10px; font-size: 0.8rem; line-height: 1.45;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.art-tip b { font-weight: 600; }
+.art-empty { color: var(--muted); padding: 26px 14px; text-align: center; margin: 0; }
+.art-form {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+}
+.art-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 130px; min-width: 0; }
+.art-field.is-wide { flex: 2 1 190px; }
+.art-field label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+.art-msg { font-size: 0.87rem; color: var(--muted); margin: 0; min-height: 1.3em; }
+.art-msg.is-bad { color: var(--warn); }
+.art-scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 14px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child, th.is-text, td.is-text { text-align: left; }
+th { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tbody tr:last-child td { border-bottom: 0; }
+td .art-tag { color: var(--muted); font-size: 0.78rem; }
+.is-over { color: var(--warn); font-weight: 500; }
+.is-under { color: var(--good); font-weight: 500; }
+.art-foot { color: var(--muted); font-size: 0.84rem; margin: 0; max-width: 75ch; }
+@media (max-width: 660px) {
+  .art-term + .art-term { border-left: 0; border-top: 1px solid var(--line); }
+  .art-term { flex-basis: 100%; }
+  .art-big { font-size: 1.8rem; }
+}
+</style>
+
+<main class="art-page">
+  <header class="art-head">
+    <div class="art-head-row"><h1>Aluminium Rate Tracker</h1><button type="button" class="is-small" id="theme-btn">Day mode</button></div>
+    <p class="art-sub">Aluminium winding wire, up to 32 SWG, 33 SWG and 38 SWG, priced from the MCX aluminium close.</p>
+    <p class="art-status" id="status">Loading saved rates…</p>
+  </header>
+
+  <p class="art-note" id="stale" hidden></p>
+
+  <div class="art-gauge">
+    <span class="art-label" id="gauge-label">Gauge</span>
+    <div class="art-range" role="group" aria-labelledby="gauge-label">
+      <button type="button" data-gauge="32">Up to 32 SWG</button>
+      <button type="button" data-gauge="33">33 SWG</button>
+      <button type="button" data-gauge="38">38 SWG</button>
+    </div>
+  </div>
+
+  <section class="art-eq" aria-label="Rate calculation">
+    <div class="art-term">
+      <span class="art-label">MCX aluminium close</span>
+      <span class="art-big"><span id="mcx-val">—</span> <small>₹/kg</small></span>
+      <span class="art-meta" id="mcx-meta">The first rate appears after the next daily update.</span>
+    </div>
+    <div class="art-term">
+      <span class="art-label" id="ex-label">Before tax</span>
+      <span class="art-big"><span id="ex-val">—</span> <small>₹/kg ex-tax</small></span>
+      <span class="art-meta art-pct" id="wrap-markup"><label for="markup">Markup on MCX</label>
+        <input type="number" id="markup" min="0" max="200" step="0.1" inputmode="decimal"> %</span>
+      <span class="art-meta art-pct" id="wrap-markup33" hidden><label for="markup33">Markup on MCX</label>
+        <input type="number" id="markup33" min="0" max="300" step="0.01" inputmode="decimal"> %</span>
+      <span class="art-meta art-pct" id="wrap-markup38" hidden><label for="markup38">Markup on MCX</label>
+        <input type="number" id="markup38" min="0" max="300" step="0.1" inputmode="decimal"> %</span>
+    </div>
+    <div class="art-term is-final">
+      <span class="art-label" id="fin-label">With tax</span>
+      <span class="art-big"><span id="fin-val">—</span> <small>₹/kg, rounded up</small></span>
+      <span class="art-meta art-pct"><label for="tax">Tax</label>
+        <input type="number" id="tax" min="0" max="100" step="0.1" inputmode="decimal"> %</span>
+    </div>
+  </section>
+  <p class="art-msg" id="cfg-msg" aria-live="polite"></p>
+
+  <section class="art-signal" id="signal" aria-label="Buying signal">
+    <div class="art-signal-main"><span class="art-label">Buying signal</span><span class="art-pill" id="sig-pill">Loading…</span></div>
+    <p class="art-hint" id="sig-why"></p>
+    <p class="art-hint" id="sig-rule">Rule: Buy when the close is at least 1% below the average of the last 30 logged days and in the bottom third of their range. Don't buy extra when it is at least 1% above and in the top third. It compares past prices only and cannot predict the next move.</p>
+  </section>
+
+  <section class="art-sec" id="chart-sec">
+    <div class="art-sec-head">
+      <h2>MCX aluminium, daily close</h2>
+      <div class="art-range" role="group" aria-label="Chart range">
+        <button type="button" class="is-small" data-range="1M">1 month</button>
+        <button type="button" class="is-small" data-range="3M">3 months</button>
+        <button type="button" class="is-small" data-range="ALL">All</button>
+      </div>
+    </div>
+    <div class="art-chart" id="chart"><p class="art-empty" id="chart-empty">The chart appears once two daily rates are logged.</p></div>
+    <p class="art-hint" id="gap-note" hidden>Dashed stretch: days with no logged rate.</p>
+  </section>
+
+  <section class="art-sec" id="quote-sec">
+    <div class="art-sec-head"><h2>Supplier quotes</h2></div>
+    <p class="art-hint">Log each wire rate a supplier quotes you, without GST. Each one is compared with your formula rate for that day.</p>
+    <form class="art-form" id="quote-form" novalidate>
+      <div class="art-field"><label for="q-date">Date</label><input type="date" id="q-date" required></div>
+      <div class="art-field is-wide"><label for="q-supplier">Supplier</label><input type="text" id="q-supplier" maxlength="60" autocomplete="off"></div>
+      <div class="art-field"><label for="q-gauge">Gauge</label><select id="q-gauge"><option value="32">Up to 32 SWG</option><option value="33">33 SWG</option><option value="38">38 SWG</option></select></div>
+      <div class="art-field"><label for="q-rate">Wire rate ex-GST (₹/kg)</label><input type="number" id="q-rate" min="1" step="0.01" inputmode="decimal" required></div>
+      <div class="art-field"><label for="q-mcx">MCX at that moment (optional)</label><input type="number" id="q-mcx" min="1" step="0.01" inputmode="decimal"></div>
+      <div class="art-field is-wide"><label for="q-note">Note</label><input type="text" id="q-note" maxlength="80" autocomplete="off" placeholder="Spool size, quantity, terms"></div>
+      <button type="submit" class="is-primary" id="q-save">Log quote</button>
+    </form>
+    <p class="art-msg" id="q-msg" aria-live="polite"></p>
+    <div class="art-scroll" id="quote-wrap" hidden>
+      <table>
+        <thead><tr>
+          <th>Date</th><th class="is-text">Supplier</th><th class="is-text">Gauge</th><th>Quote</th><th>MCX</th><th>Formula ex-tax</th>
+          <th>Quote − formula</th><th>Premium over MCX</th><th class="is-text">Note</th><th></th>
+        </tr></thead>
+        <tbody id="quote-rows"></tbody>
+      </table>
+    </div>
+    <p class="art-empty" id="quote-empty">No supplier quotes logged yet.</p>
+  </section>
+
+  <section class="art-sec" id="log-sec">
+    <div class="art-sec-head">
+      <h2>Daily log</h2>
+      <button type="button" class="is-small" id="show-all" hidden>Show all</button>
+    </div>
+    <div class="art-scroll" id="log-wrap" hidden>
+      <table>
+        <thead><tr>
+          <th>Date</th><th>MCX close</th><th>Change</th><th>Before tax</th><th>With tax</th><th class="is-text">Contract</th><th class="is-text">Source</th>
+        </tr></thead>
+        <tbody id="log-rows"></tbody>
+      </table>
+    </div>
+    <p class="art-empty" id="log-empty">No rates logged yet. A scheduled task adds the latest MCX close each trading day.</p>
+  </section>
+
+  <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg, added once per trading day by a scheduled task. This is a reference for costing and negotiation, not a live quote.</p>
+</main>
+
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var S = { rates: [], quotes: [], cfg: { markupPct: 33, taxPct: 9, markup33: 34.53, markup38: 62.6 }, run: null,
+            range: '3M', gauge: '32', showAll: false, canWrite: true, ratesLoaded: false, db: null, armed: {} };
+  function $(id) { return document.getElementById(id); }
+  function parseD(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function fmtD(s, short) { var d = parseD(s); return d.getDate() + ' ' + MON[d.getMonth()] + (short ? '' : ' ' + d.getFullYear()); }
+  function num(n) { return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function signed(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + num(Math.abs(n)); }
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function isDate(s) { return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
+  function okNum(n) { return typeof n === 'number' && isFinite(n) && n > 0; }
+  function el(tag, props) {
+    var e = document.createElement(tag), k, i;
+    if (props) for (k in props) { if (k === 'class') e.className = props[k]; else if (k === 'text') e.textContent = props[k]; else e.setAttribute(k, props[k]); }
+    for (i = 2; i < arguments.length; i++) if (arguments[i] != null) e.append(arguments[i]);
+    return e;
+  }
+  function sv(tag, attrs) { var e = document.createElementNS('http://www.w3.org/2000/svg', tag), k; for (k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function exTax(m, g) { g = g || S.gauge; if (g === '38') return m * (1 + S.cfg.markup38 / 100); if (g === '33') return m * (1 + S.cfg.markup33 / 100); return m * (1 + S.cfg.markupPct / 100); }
+  function fin(m, g) { var v = Math.round(exTax(m, g) * (1 + S.cfg.taxPct / 100) * 100) / 100; return Math.ceil(v - 1e-9); }
+  function whole(n) { return Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+  function rateOn(date) { var r = null, i; for (i = 0; i < S.rates.length; i++) { if (S.rates[i].date <= date) r = S.rates[i]; else break; } return r; }
+
+  function renderSummary() {
+    var n = S.rates.length, last = n ? S.rates[n - 1] : null, prev = n > 1 ? S.rates[n - 2] : null;
+    var gname = S.gauge === '32' ? 'Up to 32 SWG' : S.gauge + ' SWG';
+    $('ex-label').textContent = gname + ' before tax'; $('fin-label').textContent = gname + ' with tax';
+    $('wrap-markup').hidden = S.gauge !== '32'; $('wrap-markup33').hidden = S.gauge !== '33'; $('wrap-markup38').hidden = S.gauge !== '38';
+    document.querySelectorAll('[data-gauge]').forEach(function (b) { var on = b.getAttribute('data-gauge') === S.gauge; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    if (document.activeElement !== $('markup')) $('markup').value = S.cfg.markupPct;
+    if (document.activeElement !== $('tax')) $('tax').value = S.cfg.taxPct;
+    if (document.activeElement !== $('markup33')) $('markup33').value = S.cfg.markup33;
+    if (document.activeElement !== $('markup38')) $('markup38').value = S.cfg.markup38;
+    if (!last) {
+      ['mcx-val', 'ex-val', 'fin-val'].forEach(function (i) { $(i).textContent = '—'; });
+      $('mcx-meta').textContent = S.ratesLoaded ? 'The first rate appears after the next daily update.' : 'Loading…';
+      $('stale').hidden = true; return;
+    }
+    $('mcx-val').textContent = num(last.mcx);
+    $('ex-val').textContent = num(exTax(last.mcx));
+    $('fin-val').textContent = whole(fin(last.mcx));
+    var meta = fmtD(last.date) + (last.contract ? ' · ' + last.contract + ' contract' : '');
+    if (prev) { var ch = last.mcx - prev.mcx; meta += ' · ' + signed(ch) + ' (' + signed(ch / prev.mcx * 100) + '%) since ' + fmtD(prev.date, true); }
+    $('mcx-meta').textContent = meta;
+    var age = Math.round((parseD(iso(new Date())) - parseD(last.date)) / 864e5);
+    if (age > 4) { $('stale').hidden = false; $('stale').textContent = 'The latest rate is from ' + fmtD(last.date) + ', ' + age + ' days ago. The daily update may not have run, so check the MCX rate before using these figures.'; }
+    else $('stale').hidden = true;
+  }
+
+  function renderSignal() {
+    var pill = $('sig-pill'), why = $('sig-why'), win = S.rates.slice(-30), i, sum = 0;
+    pill.className = 'art-pill';
+    if (win.length < 10) { pill.textContent = S.ratesLoaded ? 'Not enough data' : 'Loading\u2026'; why.textContent = S.ratesLoaded ? 'A signal appears once 10 daily rates are logged.' : ''; return; }
+    var vals = win.map(function (r) { return r.mcx; }), last = vals[vals.length - 1];
+    for (i = 0; i < vals.length; i++) sum += vals[i];
+    var avg = sum / vals.length, lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var pos = hi > lo ? (last - lo) / (hi - lo) : 0.5, dev = (last - avg) / avg * 100;
+    if (dev <= -1 && pos <= 1 / 3) { pill.textContent = 'Buy \u2014 price is low'; pill.classList.add('is-buy'); }
+    else if (dev >= 1 && pos >= 2 / 3) { pill.textContent = 'Don\u2019t buy extra \u2014 price is high'; pill.classList.add('is-wait'); }
+    else { pill.textContent = 'No clear signal \u2014 price is near average'; pill.classList.add('is-hold'); }
+    why.textContent = 'The latest close of ' + num(last) + ' is ' + (Math.abs(dev) < 0.05 ? 'level with' : Math.abs(dev).toFixed(1) + '% ' + (dev < 0 ? 'below' : 'above')) +
+      ' the ' + num(avg) + ' average of the last ' + vals.length + ' logged days, and ' + Math.round(pos * 100) + '% of the way up their range of ' + num(lo) + ' to ' + num(hi) + '.';
+  }
+
+  function renderStatus() {
+    var t = $('status'), r = S.run;
+    if (!S.ratesLoaded) return;
+    if (r && typeof r.at === 'string') {
+      var d = new Date(r.at), when = isNaN(d) ? r.at : d.getDate() + ' ' + MON[d.getMonth()] + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      t.textContent = 'Last automatic check: ' + when + (r.ok === false ? ' — could not log a rate' : ' — ok') + (r.message ? '. ' + String(r.message).slice(0, 200) : '');
+    } else t.textContent = S.rates.length ? S.rates.length + ' daily rates logged.' : 'Waiting for the first daily update.';
+  }
+
+  function renderChart() {
+    var box = $('chart'), old = box.querySelector('svg'), tipOld = box.querySelector('.art-tip');
+    if (old) old.remove(); if (tipOld) tipOld.remove();
+    document.querySelectorAll('[data-range]').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-range') === S.range); });
+    var pts = S.rates;
+    if (pts.length && S.range !== 'ALL') {
+      var c = parseD(pts[pts.length - 1].date); c.setMonth(c.getMonth() - (S.range === '1M' ? 1 : 3));
+      var cut = iso(c); pts = pts.filter(function (p) { return p.date >= cut; });
+    }
+    if (pts.length < 2) { $('chart-empty').hidden = false; $('gap-note').hidden = true; return; }
+    $('chart-empty').hidden = true;
+    var W = Math.max(280, box.clientWidth - 16), H = 250, m = { l: 46, r: 58, t: 14, b: 26 };
+    var iw = W - m.l - m.r, ih = H - m.t - m.b;
+    var xs = pts.map(function (p) { return parseD(p.date).getTime(); }), t0 = xs[0], t1 = xs[xs.length - 1];
+    var vals = pts.map(function (p) { return p.mcx; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var steps = [0.5, 1, 2, 5, 10, 20, 50, 100], step = steps[steps.length - 1], i;
+    for (i = 0; i < steps.length; i++) if ((hi - lo) / steps[i] <= 5) { step = steps[i]; break; }
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step; if (hi === lo) hi = lo + step;
+    function X(t) { return m.l + (t1 === t0 ? iw / 2 : (t - t0) / (t1 - t0) * iw); }
+    function Y(v) { return m.t + (hi - v) / (hi - lo) * ih; }
+    var svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'MCX aluminium daily close in rupees per kg' });
+    for (var v = lo; v <= hi + 1e-9; v += step) {
+      svg.append(sv('line', { x1: m.l, x2: m.l + iw, y1: Y(v), y2: Y(v), stroke: 'var(--line)', 'stroke-width': 1 }));
+      var tx = sv('text', { x: m.l - 8, y: Y(v) + 4, 'text-anchor': 'end' }); tx.textContent = (step < 1 ? v.toFixed(1) : String(Math.round(v))); svg.append(tx);
+    }
+    var nt = Math.max(2, Math.min(6, Math.floor(iw / 90))), seen = {};
+    for (i = 0; i < nt; i++) {
+      var idx = Math.round(i * (pts.length - 1) / (nt - 1)); if (seen[idx]) continue; seen[idx] = 1;
+      var xt = sv('text', { x: X(xs[idx]), y: H - 7, 'text-anchor': i === 0 ? 'start' : i === nt - 1 ? 'end' : 'middle' });
+      xt.textContent = fmtD(pts[idx].date, true); svg.append(xt);
+    }
+    var segs = [[0]];
+    for (i = 1; i < pts.length; i++) { if (xs[i] - xs[i - 1] > 6 * 864e5) segs.push([i]); else segs[segs.length - 1].push(i); }
+    $('gap-note').hidden = segs.length < 2;
+    for (i = 1; i < segs.length; i++) {
+      var a = segs[i - 1][segs[i - 1].length - 1], b = segs[i][0];
+      svg.append(sv('line', { x1: X(xs[a]), y1: Y(vals[a]), x2: X(xs[b]), y2: Y(vals[b]), stroke: 'var(--accent)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', 'stroke-opacity': 0.7 }));
+    }
+    segs.forEach(function (sg) {
+      var d = sg.map(function (j, k) { return (k ? 'L' : 'M') + X(xs[j]).toFixed(1) + ' ' + Y(vals[j]).toFixed(1); }).join(' ');
+      if (sg.length > 1) {
+        svg.append(sv('path', { d: d + ' L' + X(xs[sg[sg.length - 1]]).toFixed(1) + ' ' + (m.t + ih) + ' L' + X(xs[sg[0]]).toFixed(1) + ' ' + (m.t + ih) + ' Z', fill: 'var(--accent-soft)', stroke: 'none' }));
+        svg.append(sv('path', { d: d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      } else svg.append(sv('circle', { cx: X(xs[sg[0]]), cy: Y(vals[sg[0]]), r: 3, fill: 'var(--accent)' }));
+    });
+    var li = pts.length - 1;
+    svg.append(sv('circle', { cx: X(xs[li]), cy: Y(vals[li]), r: 4.5, fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2 }));
+    var lt = sv('text', { x: X(xs[li]) + 9, y: Y(vals[li]) + 4, 'text-anchor': 'start', style: 'fill: var(--ink); font-weight: 600; font-size: 12px' });
+    lt.textContent = num(vals[li]); svg.append(lt);
+    var guide = sv('line', { y1: m.t, y2: m.t + ih, stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' });
+    var dot = sv('circle', { r: 4.5, fill: 'var(--surface)', stroke: 'var(--accent)', 'stroke-width': 2, visibility: 'hidden' });
+    svg.append(guide, dot);
+    var tip = el('div', { class: 'art-tip' }); tip.hidden = true;
+    function move(ev) {
+      var rc = svg.getBoundingClientRect(), px = (ev.clientX - rc.left) * (W / rc.width), best = 0, bd = Infinity, j;
+      for (j = 0; j < xs.length; j++) { var dd = Math.abs(X(xs[j]) - px); if (dd < bd) { bd = dd; best = j; } }
+      var p = pts[best], cx = X(xs[best]);
+      guide.setAttribute('x1', cx); guide.setAttribute('x2', cx); guide.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', Y(p.mcx)); dot.setAttribute('visibility', 'visible');
+      tip.replaceChildren(el('b', { text: fmtD(p.date) }), el('br'), 'MCX ' + num(p.mcx), el('br'), 'Before tax ' + num(exTax(p.mcx)), el('br'), 'With tax ' + whole(fin(p.mcx)));
+      tip.hidden = false;
+      var left = cx * (rc.width / W) + 8 + 14; if (left + tip.offsetWidth > box.clientWidth - 4) left = cx * (rc.width / W) + 8 - tip.offsetWidth - 14;
+      tip.style.left = Math.max(4, left) + 'px';
+    }
+    function leave() { tip.hidden = true; guide.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); }
+    svg.addEventListener('pointermove', move); svg.addEventListener('pointerdown', move); svg.addEventListener('pointerleave', leave);
+    box.append(svg, tip);
+  }
+
+  function renderQuotes() {
+    var body = $('quote-rows'), qs = S.quotes.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    body.replaceChildren();
+    $('quote-wrap').hidden = !qs.length; $('quote-empty').hidden = !!qs.length;
+    qs.forEach(function (q) {
+      var own = okNum(q.mcxAtQuote), r = own ? null : rateOn(q.date), mcx = own ? q.mcxAtQuote : (r ? r.mcx : null);
+      var tr = el('tr', null, el('td', { text: fmtD(q.date) }), el('td', { class: 'is-text', text: q.supplier || '—' }), el('td', { class: 'is-text', text: q.gauge === '32' ? 'Up to 32' : q.gauge + ' SWG' }), el('td', { text: num(q.rate) }));
+      if (mcx == null) { tr.append(el('td', { text: '—' }), el('td', { text: '—' }), el('td', { text: '—' }), el('td', { text: '—' })); }
+      else {
+        var diff = q.rate - exTax(mcx, q.gauge), prem = q.rate - mcx;
+        tr.append(
+          el('td', null, num(mcx) + ' ', el('span', { class: 'art-tag', text: own ? 'at quote' : (r.date === q.date ? 'close' : 'close ' + fmtD(r.date, true)) })),
+          el('td', { text: num(exTax(mcx, q.gauge)) }),
+          el('td', { class: Math.abs(diff) < 0.005 ? '' : diff > 0 ? 'is-over' : 'is-under', text: signed(diff) + (diff > 0.005 ? ' above' : diff < -0.005 ? ' below' : '') }),
+          el('td', { text: num(prem) + ' (' + (prem / mcx * 100).toFixed(1) + '%)' }));
+      }
+      tr.append(el('td', { class: 'is-text', text: q.note || '' }));
+      var td = el('td');
+      if (S.canWrite && S.db) {
+        var b = el('button', { type: 'button', class: 'is-small', text: S.armed[q.id] ? 'Confirm delete' : 'Delete' });
+        b.addEventListener('click', function () {
+          if (!S.armed[q.id]) { S.armed = {}; S.armed[q.id] = true; renderQuotes(); return; }
+          b.disabled = true;
+          S.db.collection('quotes').doc(q.id).delete().then(function () { S.armed = {}; msg('q-msg', 'Quote deleted.'); }, function () { b.disabled = false; msg('q-msg', 'Could not delete the quote. Try again.', true); });
+        });
+        td.append(b);
+      }
+      tr.append(td); body.append(tr);
+    });
+  }
+
+  function renderLog() {
+    var body = $('log-rows'), n = S.rates.length, max = S.showAll ? n : Math.min(n, 30), i;
+    body.replaceChildren();
+    $('log-wrap').hidden = !n; $('log-empty').hidden = !!n || !S.ratesLoaded;
+    $('show-all').hidden = n <= 30; $('show-all').textContent = S.showAll ? 'Show latest 30' : 'Show all ' + n;
+    for (i = n - 1; i >= n - max; i--) {
+      var r = S.rates[i], p = i > 0 ? S.rates[i - 1] : null;
+      body.append(el('tr', null, el('td', { text: fmtD(r.date) }), el('td', { text: num(r.mcx) }),
+        el('td', { text: p ? signed(r.mcx - p.mcx) : '—' }), el('td', { text: num(exTax(r.mcx)) }), el('td', { text: whole(fin(r.mcx)) }),
+        el('td', { class: 'is-text', text: r.contract || '' }), el('td', { class: 'is-text', text: r.source || '' })));
+    }
+  }
+
+  function renderAll() { renderSummary(); renderSignal(); renderStatus(); renderChart(); renderQuotes(); renderLog(); }
+  function msg(id, text, bad) { var e = $(id); e.textContent = text; e.classList.toggle('is-bad', !!bad); }
+  function lock() { ['markup', 'tax', 'markup33', 'markup38'].forEach(function (i) { $(i).disabled = true; }); $('quote-form').hidden = true; renderQuotes(); }
+
+  document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); }); });
+  try { var sg = localStorage.getItem('gauge'); if (sg === '33' || sg === '38') S.gauge = sg; } catch (e) {}
+  document.querySelectorAll('[data-gauge]').forEach(function (b) { b.addEventListener('click', function () { S.gauge = b.getAttribute('data-gauge'); try { localStorage.setItem('gauge', S.gauge); } catch (e) {} renderAll(); }); });
+  var root = document.documentElement;
+  function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }
+  function themeLabel() { $('theme-btn').textContent = isDark() ? 'Day mode' : 'Night mode'; }
+  try { var st = localStorage.getItem('theme'); if (st === 'light' || st === 'dark') root.setAttribute('data-theme', st); } catch (e) {}
+  $('theme-btn').addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next); try { localStorage.setItem('theme', next); } catch (e) {} themeLabel(); });
+  themeLabel();
+  $('show-all').addEventListener('click', function () { S.showAll = !S.showAll; renderLog(); });
+  $('q-date').value = iso(new Date());
+
+  var saving = false;
+  function saveCfg() {
+    var mk = parseFloat($('markup').value), tx = parseFloat($('tax').value), ex = parseFloat($('markup33').value), m38 = parseFloat($('markup38').value);
+    if (!(mk >= 0 && mk <= 200) || !(tx >= 0 && tx <= 100) || !(ex >= 0 && ex <= 300) || !(m38 >= 0 && m38 <= 300)) { msg('cfg-msg', 'Enter a markup between 0 and 200, a tax between 0 and 100, and 33 SWG and 38 SWG markups between 0 and 300.', true); return; }
+    if (mk === S.cfg.markupPct && tx === S.cfg.taxPct && ex === S.cfg.markup33 && m38 === S.cfg.markup38) return;
+    S.cfg = { markupPct: mk, taxPct: tx, markup33: ex, markup38: m38 }; renderAll();
+    if (!S.db) { msg('cfg-msg', 'Changed for this visit only. Saving is not available in this view.'); return; }
+    if (saving) return; saving = true;
+    S.db.doc('config/settings').set({ markupPct: mk, taxPct: tx, markup33: ex, markup38: m38, updatedAt: new Date().toISOString() }).then(
+      function () { saving = false; msg('cfg-msg', 'Saved: markup ' + mk + '%, tax ' + tx + '%, 33 SWG markup ' + ex + '%, 38 SWG markup ' + m38 + '%.'); },
+      function () { saving = false; msg('cfg-msg', 'Could not save the percentages. They apply to this visit only.', true); });
+  }
+  $('markup').addEventListener('change', saveCfg); $('tax').addEventListener('change', saveCfg); $('markup33').addEventListener('change', saveCfg); $('markup38').addEventListener('change', saveCfg);
+
+  $('quote-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var date = $('q-date').value, rate = parseFloat($('q-rate').value), mcx = parseFloat($('q-mcx').value);
+    if (!isDate(date)) { msg('q-msg', 'Choose the date of the quote.', true); return; }
+    if (!okNum(rate)) { msg('q-msg', 'Enter the wire rate in ₹/kg, without GST.', true); return; }
+    if (!S.db) { msg('q-msg', 'Saving is not available in this view. Open the tracker in Claude to log quotes.', true); return; }
+    var doc = { date: date, supplier: $('q-supplier').value.trim(), gauge: ['33', '38'].indexOf($('q-gauge').value) >= 0 ? $('q-gauge').value : '32', rate: rate, note: $('q-note').value.trim(), createdAt: new Date().toISOString() };
+    if (okNum(mcx)) doc.mcxAtQuote = mcx;
+    $('q-save').disabled = true;
+    S.db.collection('quotes').add(doc).then(function () {
+      $('q-save').disabled = false; $('q-rate').value = ''; $('q-mcx').value = ''; $('q-note').value = '';
+      msg('q-msg', 'Quote logged.');
+    }, function () { $('q-save').disabled = false; msg('q-msg', 'Could not save the quote. Try again.', true); });
+  });
+
+  if (window.ResizeObserver) { var lastW = 0; new ResizeObserver(function () { var w = $('chart').clientWidth; if (w !== lastW) { lastW = w; renderChart(); } }).observe($('chart')); }
+  renderAll();
+
+  function start(db, user) {
+    S.db = db;
+    if (!db) { S.ratesLoaded = true; $('status').textContent = 'Saved rates are not available in this view. Open the tracker in Claude to see them.'; lock(); renderLog(); return; }
+    if (user && user.can) Promise.resolve(user.can('data.write')).then(function (c) { if (c === false) { S.canWrite = false; lock(); } }, function () {});
+    var timer = setTimeout(function () { if (!S.ratesLoaded) $('status').textContent = 'The saved rates cannot be reached yet. Still trying…'; }, 10000);
+    function dead() { clearTimeout(timer); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
+    db.collection('rates').onSnapshot(function (snap) {
+      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
+        .filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      if (!snap.metadata || !snap.metadata.fromCache) clearTimeout(timer);
+      S.ratesLoaded = true; renderAll();
+    }, dead);
+    db.collection('quotes').onSnapshot(function (snap) {
+      S.quotes = snap.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, date: x.date, supplier: typeof x.supplier === 'string' ? x.supplier : '', rate: x.rate, mcxAtQuote: x.mcxAtQuote, gauge: x.gauge === '33' || x.gauge === '38' ? x.gauge : '32', note: typeof x.note === 'string' ? x.note : '' }; })
+        .filter(function (q) { return isDate(q.date) && okNum(q.rate); });
+      renderQuotes();
+    }, function () {});
+    db.doc('config/settings').onSnapshot(function (d) {
+      var x = d.exists ? d.data() : null;
+      if (x && typeof x.markupPct === 'number' && typeof x.taxPct === 'number') { S.cfg = { markupPct: x.markupPct, taxPct: x.taxPct, markup33: typeof x.markup33 === 'number' ? x.markup33 : 34.53, markup38: typeof x.markup38 === 'number' ? x.markup38 : 62.6 }; renderAll(); }
+    }, function () {});
+    db.doc('status/lastRun').onSnapshot(function (d) { S.run = d.exists ? d.data() : null; renderStatus(); }, function () {});
+  }
+  var c = window.claude;
+  if (c && c.use) Promise.all([c.use('db'), c.use('user')]).then(function (r) { start(r[0], r[1]); }, function () { start(null, null); });
+  else start(null, null);
+})();
+</script>
