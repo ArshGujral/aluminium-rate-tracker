@@ -53,6 +53,46 @@ body {
   display: flex; flex-direction: column; gap: 28px;
 }
 .art-head { display: flex; flex-direction: column; gap: 4px; }
+/* Xing-Z loading screen, from the Xing-Z website (src/loader/loader.html). Only transform and opacity animate. */
+#xz-loader {
+  --xbg: #050a0a; --xbase: rgba(255, 255, 255, .14); --xlit: #a0d5cd; --xhot: #fff; --xline: rgba(255, 255, 255, .1);
+  position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: var(--xbg);
+  transition: opacity .45s ease, visibility .45s;
+  animation: xz-out .4s 10s forwards; /* failsafe: step aside even if the page never starts */
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #xz-loader { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .1); } }
+:root[data-theme="light"] #xz-loader { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .1); }
+#xz-loader.is-done { opacity: 0; visibility: hidden; }
+#xz-loader.is-done .xz-stack { transform: scale(1.04); }
+.xz-stack { display: grid; justify-items: center; gap: 28px; transition: transform .45s ease; }
+.xz-mark {
+  position: relative; overflow: hidden; width: min(56vw, 230px); aspect-ratio: 873 / 357; background: var(--xbase);
+  -webkit-mask: url(xingz-logo-white.png) center / contain no-repeat; mask: url(xingz-logo-white.png) center / contain no-repeat;
+}
+.xz-current {
+  position: absolute; inset: 0; width: 45%; will-change: transform;
+  background: linear-gradient(90deg, transparent, var(--xlit) 40%, var(--xhot) 50%, var(--xlit) 60%, transparent);
+  animation: xz-run 1.8s cubic-bezier(.6, 0, .3, 1) infinite;
+}
+.xz-spark { position: absolute; inset: 0; background: var(--xlit); opacity: 0; animation: xz-spark 1.8s ease-out infinite; }
+.xz-line { position: relative; overflow: hidden; width: 96px; height: 2px; border-radius: 2px; background: var(--xline); }
+.xz-line::after {
+  content: ''; position: absolute; inset: 0; width: 40%; border-radius: inherit; background: var(--xlit); will-change: transform;
+  animation: xz-line 1.8s cubic-bezier(.6, 0, .3, 1) infinite;
+}
+@keyframes xz-run { from { transform: translateX(-110%); } 70%, to { transform: translateX(240%); } }
+@keyframes xz-spark { 0%, 62% { opacity: 0; } 72% { opacity: .85; } 100% { opacity: 0; } }
+@keyframes xz-line { from { transform: translateX(-100%); } 70%, to { transform: translateX(250%); } }
+@keyframes xz-out { to { opacity: 0; visibility: hidden; } }
+@keyframes xz-breathe { from { opacity: .35; } to { opacity: .75; } }
+@media (prefers-reduced-motion: reduce) {
+  .xz-current, .xz-line::after { display: none; }
+  .xz-spark { animation: xz-breathe 2.4s ease-in-out infinite alternate; }
+}
+.art-logo {
+  display: block; width: 118px; aspect-ratio: 873 / 357; background: var(--ink); flex: none;
+  -webkit-mask: url(xingz-logo-white.png) left center / contain no-repeat; mask: url(xingz-logo-white.png) left center / contain no-repeat;
+}
 .art-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
 .art-head h1 {
   font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1.2;
@@ -201,9 +241,19 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 </style>
 </head>
 <body>
+<!--body-->
+<script>try { var xzT = localStorage.getItem('theme'); if (xzT === 'light' || xzT === 'dark') document.documentElement.setAttribute('data-theme', xzT); } catch (e) {}</script>
+<div id="xz-loader" role="status" aria-label="Loading Xing-Z">
+  <div class="xz-stack">
+    <div class="xz-mark"><div class="xz-current"></div><div class="xz-spark"></div></div>
+    <div class="xz-line"></div>
+  </div>
+</div>
+
 <main class="art-page">
   <header class="art-head">
-    <div class="art-head-row"><h1>Aluminium Rate Tracker</h1><button type="button" class="is-small" id="theme-btn">Day mode</button></div>
+    <div class="art-head-row"><span class="art-logo" role="img" aria-label="Xing-Z"></span><button type="button" class="is-small" id="theme-btn">Day mode</button></div>
+    <h1>Aluminium Rate Tracker</h1>
     <p class="art-sub">Aluminium winding wire, up to 32 SWG, 33 SWG and 38 SWG, priced from the MCX aluminium close.</p>
     <p class="art-status" id="status">Loading saved rates…</p>
   </header>
@@ -539,7 +589,12 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     }
   }
 
-  function renderAll() { renderSummary(); renderSignal(); renderStatus(); renderChart(); renderQuotes(); renderLog(); }
+  // Fade out the Xing-Z loading screen once rates have arrived; keep it up for one run of the animation so a fast load doesn't flash it.
+  function hideLoader() {
+    var x = $('xz-loader'); if (!x || x.dataset.out) return; x.dataset.out = '1';
+    setTimeout(function () { requestAnimationFrame(function () { x.classList.add('is-done'); setTimeout(function () { x.remove(); }, 800); }); }, Math.max(0, 900 - performance.now()));
+  }
+  function renderAll() { if (S.ratesLoaded) hideLoader(); renderSummary(); renderSignal(); renderStatus(); renderChart(); renderQuotes(); renderLog(); }
   function msg(id, text, bad) { var e = $(id); e.textContent = text; e.classList.toggle('is-bad', !!bad); }
   function lock() { S.canWrite = false; $('quote-form').hidden = true; renderAll(); }
   function lsGet(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
@@ -626,7 +681,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     }
     if (user && user.can) Promise.resolve(user.can('data.write')).then(function (c) { if (c === false) lock(); }, function () {});
     var timer = setTimeout(function () { if (!S.ratesLoaded) $('status').textContent = 'The saved rates cannot be reached yet. Still trying…'; }, 10000);
-    function dead() { clearTimeout(timer); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
+    function dead() { clearTimeout(timer); hideLoader(); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
     db.collection('rates').onSnapshot(function (snap) {
       S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, low: x.low, high: x.high, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
         .filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
