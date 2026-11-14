@@ -100,6 +100,8 @@ button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
 .art-pill.is-buy { color: var(--good); border-color: var(--good); background: var(--good-soft); }
 .art-pill.is-wait { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
 .art-pill.is-hold { color: var(--ink); }
+.art-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.art-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .art-sec { display: flex; flex-direction: column; gap: 12px; }
 .art-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
 .art-sec h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin: 0; }
@@ -139,9 +141,33 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 .is-under { color: var(--good); font-weight: 500; }
 .art-foot { color: var(--muted); font-size: 0.84rem; margin: 0; max-width: 75ch; }
 @media (max-width: 660px) {
+  body { font-size: 16px; }
+  .art-page { padding-block: 18px 36px; gap: 22px; }
+  .art-head h1 { font-size: 1.4rem; }
   .art-term + .art-term { border-left: 0; border-top: 1px solid var(--line); }
-  .art-term { flex-basis: 100%; }
-  .art-big { font-size: 1.8rem; }
+  .art-term { flex-basis: 100%; padding: 14px 16px; }
+  .art-big { font-size: 1.9rem; }
+  input[type="number"], input[type="text"], input[type="date"], select { font-size: 16px; padding: 10px; }
+  .art-pct input { width: 92px; }
+  button { min-height: 44px; }
+  button.is-small { min-height: 38px; padding: 6px 12px; font-size: 0.9rem; }
+  .art-gauge { flex-direction: column; align-items: stretch; margin-bottom: -8px; }
+  .art-gauge .art-range { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .art-gauge .art-range button { padding: 8px 4px; }
+  .art-signal { padding: 14px 16px; }
+  .art-field { flex: 1 1 calc(50% - 6px); }
+  .art-field.is-wide { flex-basis: 100%; }
+  #q-save { width: 100%; }
+  th, td { padding: 10px 8px; }
+  th { letter-spacing: 0.03em; }
+  .is-opt { display: none; }
+  table.is-cards thead { display: none; }
+  table.is-cards, table.is-cards tbody, table.is-cards tr { display: block; }
+  table.is-cards tr { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  table.is-cards tr:last-child { border-bottom: 0; }
+  table.is-cards td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; border: 0; white-space: normal; text-align: right; }
+  table.is-cards td::before { content: attr(data-label); color: var(--muted); font-size: 0.82rem; text-align: left; flex: none; }
+  table.is-cards td:empty { display: none; }
 }
 </style>
 
@@ -178,6 +204,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         <input type="number" id="markup33" min="0" max="300" step="0.01" inputmode="decimal"> %</span>
       <span class="art-meta art-pct" id="wrap-markup38" hidden><label for="markup38">Markup on MCX</label>
         <input type="number" id="markup38" min="0" max="300" step="0.1" inputmode="decimal"> %</span>
+      <label class="art-meta art-check"><input type="checkbox" id="learn"> Learn markup from supplier quotes</label>
+      <span class="art-meta" id="learn-note"></span>
     </div>
     <div class="art-term is-final">
       <span class="art-label" id="fin-label">With tax</span>
@@ -209,22 +237,24 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   <section class="art-sec" id="quote-sec">
     <div class="art-sec-head"><h2>Supplier quotes</h2></div>
-    <p class="art-hint">Log each wire rate a supplier quotes you, without GST. Each one is compared with your formula rate for that day.</p>
+    <p class="art-hint">Log each wire rate a supplier quotes you. The tracker works out the markup over MCX in each quote and, when learning is on, uses the average of the last 5 quotes for a gauge as that gauge’s markup.</p>
+    <p class="art-hint" id="store-note" hidden>Quotes and settings you add on this website are saved on this device only.</p>
     <form class="art-form" id="quote-form" novalidate>
       <div class="art-field"><label for="q-date">Date</label><input type="date" id="q-date" required></div>
       <div class="art-field is-wide"><label for="q-supplier">Supplier</label><input type="text" id="q-supplier" maxlength="60" autocomplete="off"></div>
       <div class="art-field"><label for="q-gauge">Gauge</label><select id="q-gauge"><option value="32">Up to 32 SWG</option><option value="33">33 SWG</option><option value="38">38 SWG</option></select></div>
-      <div class="art-field"><label for="q-rate">Wire rate ex-GST (₹/kg)</label><input type="number" id="q-rate" min="1" step="0.01" inputmode="decimal" required></div>
+      <div class="art-field"><label for="q-rate">Wire rate (₹/kg)</label><input type="number" id="q-rate" min="1" step="0.01" inputmode="decimal" required></div>
       <div class="art-field"><label for="q-mcx">MCX at that moment (optional)</label><input type="number" id="q-mcx" min="1" step="0.01" inputmode="decimal"></div>
       <div class="art-field is-wide"><label for="q-note">Note</label><input type="text" id="q-note" maxlength="80" autocomplete="off" placeholder="Spool size, quantity, terms"></div>
+      <label class="art-check art-field is-wide" style="flex-direction: row"><input type="checkbox" id="q-incl"> This rate includes tax</label>
       <button type="submit" class="is-primary" id="q-save">Log quote</button>
     </form>
     <p class="art-msg" id="q-msg" aria-live="polite"></p>
     <div class="art-scroll" id="quote-wrap" hidden>
-      <table>
+      <table class="is-cards">
         <thead><tr>
-          <th>Date</th><th class="is-text">Supplier</th><th class="is-text">Gauge</th><th>Quote</th><th>MCX</th><th>Formula ex-tax</th>
-          <th>Quote − formula</th><th>Premium over MCX</th><th class="is-text">Note</th><th></th>
+          <th>Date</th><th class="is-text">Supplier</th><th class="is-text">Gauge</th><th>Quote ex-tax</th><th>MCX</th><th>Markup over MCX</th>
+          <th>Formula ex-tax</th><th>Quote − formula</th><th class="is-text">Note</th><th></th>
         </tr></thead>
         <tbody id="quote-rows"></tbody>
       </table>
@@ -240,27 +270,27 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <div class="art-scroll" id="log-wrap" hidden>
       <table>
         <thead><tr>
-          <th>Date</th><th>MCX close</th><th>Change</th><th>Before tax</th><th>With tax</th><th class="is-text">Contract</th><th class="is-text">Source</th>
+          <th>Date</th><th>MCX close</th><th class="is-opt">Change</th><th>Before tax</th><th>With tax</th><th class="is-text is-opt">Contract</th><th class="is-text is-opt">Source</th>
         </tr></thead>
         <tbody id="log-rows"></tbody>
       </table>
     </div>
-    <p class="art-empty" id="log-empty">No rates logged yet. A scheduled task adds the latest MCX close each trading day.</p>
+    <p class="art-empty" id="log-empty">No rates logged yet.</p>
   </section>
 
-  <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg, added once per trading day by a scheduled task. This is a reference for costing and negotiation, not a live quote.</p>
+  <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg. This is a reference for costing and negotiation, not a live quote.</p>
 </main>
 
 <script>
 (function () {
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var S = { rates: [], quotes: [], cfg: { markupPct: 33, taxPct: 9, markup33: 34.53, markup38: 62.6 }, run: null,
+  var S = { rates: [], quotes: [], cfg: { markupPct: 33, taxPct: 9, markup33: 34.53, markup38: 62.6, learn: true }, run: null, local: false, snap: null,
             range: '3M', gauge: '32', showAll: false, canWrite: true, ratesLoaded: false, db: null, armed: {} };
   function $(id) { return document.getElementById(id); }
   function parseD(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
   function fmtD(s, short) { var d = parseD(s); return d.getDate() + ' ' + MON[d.getMonth()] + (short ? '' : ' ' + d.getFullYear()); }
   function num(n) { return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-  function signed(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + num(Math.abs(n)); }
+  function signed(n) { if (Math.abs(n) < 0.005) return num(0); return (n > 0 ? '+' : '−') + num(Math.abs(n)); }
   function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function isDate(s) { return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
   function okNum(n) { return typeof n === 'number' && isFinite(n) && n > 0; }
@@ -271,10 +301,21 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     return e;
   }
   function sv(tag, attrs) { var e = document.createElementNS('http://www.w3.org/2000/svg', tag), k; for (k in attrs) e.setAttribute(k, attrs[k]); return e; }
-  function exTax(m, g) { g = g || S.gauge; if (g === '38') return m * (1 + S.cfg.markup38 / 100); if (g === '33') return m * (1 + S.cfg.markup33 / 100); return m * (1 + S.cfg.markupPct / 100); }
+  var MK = { '32': 'markupPct', '33': 'markup33', '38': 'markup38' }, INP = { '32': 'markup', '33': 'markup33', '38': 'markup38' };
+  function rateOn(date) { var r = null, i; for (i = 0; i < S.rates.length; i++) { if (S.rates[i].date <= date) r = S.rates[i]; else break; } return r; }
+  function quoteMcx(q) { if (okNum(q.mcxAtQuote)) return q.mcxAtQuote; var r = rateOn(q.date); return r ? r.mcx : null; }
+  function learned(g) {
+    var qs = S.quotes.filter(function (q) { var m = quoteMcx(q); return q.gauge === g && m && q.rate >= m && q.rate <= m * 4; })
+      .sort(function (a, b) { return a.date !== b.date ? (a.date < b.date ? 1 : -1) : ((a.at || '') < (b.at || '') ? 1 : -1); }).slice(0, 5), sum = 0;
+    if (!qs.length) return null;
+    qs.forEach(function (q) { sum += (q.rate / quoteMcx(q) - 1) * 100; });
+    return { pct: Math.round(sum / qs.length * 100) / 100, n: qs.length };
+  }
+  function active(g) { return S.cfg.learn ? learned(g) : null; }
+  function markupFor(g) { var L = active(g); return L ? L.pct : S.cfg[MK[g]]; }
+  function exTax(m, g) { return m * (1 + markupFor(g || S.gauge) / 100); }
   function fin(m, g) { var v = Math.round(exTax(m, g) * (1 + S.cfg.taxPct / 100) * 100) / 100; return Math.ceil(v - 1e-9); }
   function whole(n) { return Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
-  function rateOn(date) { var r = null, i; for (i = 0; i < S.rates.length; i++) { if (S.rates[i].date <= date) r = S.rates[i]; else break; } return r; }
 
   function renderSummary() {
     var n = S.rates.length, last = n ? S.rates[n - 1] : null, prev = n > 1 ? S.rates[n - 2] : null;
@@ -282,10 +323,17 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     $('ex-label').textContent = gname + ' before tax'; $('fin-label').textContent = gname + ' with tax';
     $('wrap-markup').hidden = S.gauge !== '32'; $('wrap-markup33').hidden = S.gauge !== '33'; $('wrap-markup38').hidden = S.gauge !== '38';
     document.querySelectorAll('[data-gauge]').forEach(function (b) { var on = b.getAttribute('data-gauge') === S.gauge; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-    if (document.activeElement !== $('markup')) $('markup').value = S.cfg.markupPct;
+    ['32', '33', '38'].forEach(function (g) {
+      var inp = $(INP[g]), L = active(g);
+      inp.disabled = !S.canWrite || !!L;
+      if (document.activeElement !== inp || L) inp.value = L ? L.pct : S.cfg[MK[g]];
+    });
+    $('tax').disabled = !S.canWrite; $('learn').disabled = !S.canWrite; $('learn').checked = !!S.cfg.learn;
     if (document.activeElement !== $('tax')) $('tax').value = S.cfg.taxPct;
-    if (document.activeElement !== $('markup33')) $('markup33').value = S.cfg.markup33;
-    if (document.activeElement !== $('markup38')) $('markup38').value = S.cfg.markup38;
+    var LL = learned(S.gauge);
+    $('learn-note').textContent = !S.cfg.learn ? (LL ? 'Your quotes suggest ' + LL.pct + '%.' : '')
+      : LL ? 'Learned from your last ' + (LL.n === 1 ? 'quote' : LL.n + ' quotes') + ' for this gauge.'
+      : 'No quotes for this gauge yet, so your set markup of ' + S.cfg[MK[S.gauge]] + '% is used.';
     if (!last) {
       ['mcx-val', 'ex-val', 'fin-val'].forEach(function (i) { $(i).textContent = '—'; });
       $('mcx-meta').textContent = S.ratesLoaded ? 'The first rate appears after the next daily update.' : 'Loading…';
@@ -298,7 +346,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     if (prev) { var ch = last.mcx - prev.mcx; meta += ' · ' + signed(ch) + ' (' + signed(ch / prev.mcx * 100) + '%) since ' + fmtD(prev.date, true); }
     $('mcx-meta').textContent = meta;
     var age = Math.round((parseD(iso(new Date())) - parseD(last.date)) / 864e5);
-    if (age > 4) { $('stale').hidden = false; $('stale').textContent = 'The latest rate is from ' + fmtD(last.date) + ', ' + age + ' days ago. The daily update may not have run, so check the MCX rate before using these figures.'; }
+    if (age > 4) { $('stale').hidden = false; $('stale').textContent = 'The latest rate is from ' + fmtD(last.date) + ', ' + age + ' days ago. ' + (S.local ? 'This website shows a snapshot and is not updated daily, so' : 'The daily update may not have run, so') + ' check the MCX rate before using these figures.'; }
     else $('stale').hidden = true;
   }
 
@@ -320,6 +368,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function renderStatus() {
     var t = $('status'), r = S.run;
     if (!S.ratesLoaded) return;
+    if (S.local) { t.textContent = 'Snapshot' + (S.snap ? ' of ' + fmtD(S.snap) : '') + ' \u00b7 ' + S.rates.length + ' daily rates.'; return; }
     if (r && typeof r.at === 'string') {
       var d = new Date(r.at), when = isNaN(d) ? r.at : d.getDate() + ' ' + MON[d.getMonth()] + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       t.textContent = 'Last automatic check: ' + when + (r.ok === false ? ' — could not log a rate' : ' — ok') + (r.message ? '. ' + String(r.message).slice(0, 200) : '');
@@ -337,7 +386,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     }
     if (pts.length < 2) { $('chart-empty').hidden = false; $('gap-note').hidden = true; return; }
     $('chart-empty').hidden = true;
-    var W = Math.max(280, box.clientWidth - 16), H = 250, m = { l: 46, r: 58, t: 14, b: 26 };
+    var W = Math.max(280, box.clientWidth - 16), H = W < 460 ? 220 : 250, m = { l: 46, r: 58, t: 14, b: 26 };
     var iw = W - m.l - m.r, ih = H - m.t - m.b;
     var xs = pts.map(function (p) { return parseD(p.date).getTime(); }), t0 = xs[0], t1 = xs[xs.length - 1];
     var vals = pts.map(function (p) { return p.mcx; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
@@ -397,32 +446,33 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   function renderQuotes() {
     var body = $('quote-rows'), qs = S.quotes.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    function td(label, text, cls) { var e = el('td', { 'data-label': label, text: text }); if (cls) e.className = cls; return e; }
     body.replaceChildren();
     $('quote-wrap').hidden = !qs.length; $('quote-empty').hidden = !!qs.length;
     qs.forEach(function (q) {
-      var own = okNum(q.mcxAtQuote), r = own ? null : rateOn(q.date), mcx = own ? q.mcxAtQuote : (r ? r.mcx : null);
-      var tr = el('tr', null, el('td', { text: fmtD(q.date) }), el('td', { class: 'is-text', text: q.supplier || '—' }), el('td', { class: 'is-text', text: q.gauge === '32' ? 'Up to 32' : q.gauge + ' SWG' }), el('td', { text: num(q.rate) }));
-      if (mcx == null) { tr.append(el('td', { text: '—' }), el('td', { text: '—' }), el('td', { text: '—' }), el('td', { text: '—' })); }
+      var own = okNum(q.mcxAtQuote), r = own ? null : rateOn(q.date), mcx = quoteMcx(q);
+      var tr = el('tr', null, td('Date', fmtD(q.date)), td('Supplier', q.supplier || '\u2014', 'is-text'), td('Gauge', q.gauge === '32' ? 'Up to 32' : q.gauge + ' SWG', 'is-text'), td('Quote ex-tax', num(q.rate)));
+      if (mcx == null) { tr.append(td('MCX', '\u2014'), td('Markup over MCX', '\u2014'), td('Formula ex-tax', '\u2014'), td('Quote \u2212 formula', '\u2014')); }
       else {
         var diff = q.rate - exTax(mcx, q.gauge), prem = q.rate - mcx;
         tr.append(
-          el('td', null, num(mcx) + ' ', el('span', { class: 'art-tag', text: own ? 'at quote' : (r.date === q.date ? 'close' : 'close ' + fmtD(r.date, true)) })),
-          el('td', { text: num(exTax(mcx, q.gauge)) }),
-          el('td', { class: Math.abs(diff) < 0.005 ? '' : diff > 0 ? 'is-over' : 'is-under', text: signed(diff) + (diff > 0.005 ? ' above' : diff < -0.005 ? ' below' : '') }),
-          el('td', { text: num(prem) + ' (' + (prem / mcx * 100).toFixed(1) + '%)' }));
+          td('MCX', num(mcx) + (own ? ' at quote' : r.date === q.date ? ' close' : ' close ' + fmtD(r.date, true))),
+          td('Markup over MCX', (prem / mcx * 100).toFixed(2) + '% (' + num(prem) + ')'),
+          td('Formula ex-tax', num(exTax(mcx, q.gauge))),
+          td('Quote \u2212 formula', signed(diff) + (diff > 0.005 ? ' above' : diff < -0.005 ? ' below' : ''), Math.abs(diff) < 0.005 ? '' : diff > 0 ? 'is-over' : 'is-under'));
       }
-      tr.append(el('td', { class: 'is-text', text: q.note || '' }));
-      var td = el('td');
-      if (S.canWrite && S.db) {
+      if (q.note) tr.append(td('Note', q.note, 'is-text')); else tr.append(el('td'));
+      var last = el('td');
+      if (S.canWrite && (S.db || S.local)) {
         var b = el('button', { type: 'button', class: 'is-small', text: S.armed[q.id] ? 'Confirm delete' : 'Delete' });
         b.addEventListener('click', function () {
           if (!S.armed[q.id]) { S.armed = {}; S.armed[q.id] = true; renderQuotes(); return; }
           b.disabled = true;
-          S.db.collection('quotes').doc(q.id).delete().then(function () { S.armed = {}; msg('q-msg', 'Quote deleted.'); }, function () { b.disabled = false; msg('q-msg', 'Could not delete the quote. Try again.', true); });
+          delQuote(q.id).then(function () { S.armed = {}; msg('q-msg', 'Quote deleted.'); }, function () { b.disabled = false; msg('q-msg', 'Could not delete the quote. Try again.', true); });
         });
-        td.append(b);
+        last.append(b);
       }
-      tr.append(td); body.append(tr);
+      tr.append(last); body.append(tr);
     });
   }
 
@@ -434,14 +484,35 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     for (i = n - 1; i >= n - max; i--) {
       var r = S.rates[i], p = i > 0 ? S.rates[i - 1] : null;
       body.append(el('tr', null, el('td', { text: fmtD(r.date) }), el('td', { text: num(r.mcx) }),
-        el('td', { text: p ? signed(r.mcx - p.mcx) : '—' }), el('td', { text: num(exTax(r.mcx)) }), el('td', { text: whole(fin(r.mcx)) }),
-        el('td', { class: 'is-text', text: r.contract || '' }), el('td', { class: 'is-text', text: r.source || '' })));
+        el('td', { class: 'is-opt', text: p ? signed(r.mcx - p.mcx) : '—' }), el('td', { text: num(exTax(r.mcx)) }), el('td', { text: whole(fin(r.mcx)) }),
+        el('td', { class: 'is-text is-opt', text: r.contract || '' }), el('td', { class: 'is-text is-opt', text: r.source || '' })));
     }
   }
 
   function renderAll() { renderSummary(); renderSignal(); renderStatus(); renderChart(); renderQuotes(); renderLog(); }
   function msg(id, text, bad) { var e = $(id); e.textContent = text; e.classList.toggle('is-bad', !!bad); }
-  function lock() { ['markup', 'tax', 'markup33', 'markup38'].forEach(function (i) { $(i).disabled = true; }); $('quote-form').hidden = true; renderQuotes(); }
+  function lock() { S.canWrite = false; $('quote-form').hidden = true; renderAll(); }
+  function lsGet(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  function normQ(x, id) { return { id: id, date: x.date, supplier: typeof x.supplier === 'string' ? x.supplier : '', rate: x.rate, mcxAtQuote: x.mcxAtQuote, gauge: x.gauge === '33' || x.gauge === '38' ? x.gauge : '32', note: typeof x.note === 'string' ? x.note : '', at: typeof x.createdAt === 'string' ? x.createdAt : '' }; }
+  function localQuotes() {
+    var gone = lsGet('art-quotes-del', []), mine = lsGet('art-quotes', []);
+    S.quotes = (S.seed || []).filter(function (q) { return gone.indexOf(q.id) < 0; }).concat(Array.isArray(mine) ? mine : [])
+      .map(function (q) { return normQ(q, q.id); }).filter(function (q) { return isDate(q.date) && okNum(q.rate); });
+  }
+  function addQuote(doc) {
+    if (S.db) return S.db.collection('quotes').add(doc);
+    var mine = lsGet('art-quotes', []); doc.id = 'l' + Date.now(); mine.push(doc);
+    if (!lsSet('art-quotes', mine)) return Promise.reject();
+    localQuotes(); renderAll(); return Promise.resolve();
+  }
+  function delQuote(id) {
+    if (S.db) return S.db.collection('quotes').doc(id).delete();
+    var mine = lsGet('art-quotes', []), kept = mine.filter(function (q) { return q.id !== id; }), ok;
+    if (kept.length !== mine.length) ok = lsSet('art-quotes', kept); else { var gone = lsGet('art-quotes-del', []); gone.push(id); ok = lsSet('art-quotes-del', gone); }
+    if (!ok) return Promise.reject();
+    localQuotes(); renderAll(); return Promise.resolve();
+  }
 
   document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); }); });
   try { var sg = localStorage.getItem('gauge'); if (sg === '33' || sg === '38') S.gauge = sg; } catch (e) {}
@@ -457,30 +528,33 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   var saving = false;
   function saveCfg() {
-    var mk = parseFloat($('markup').value), tx = parseFloat($('tax').value), ex = parseFloat($('markup33').value), m38 = parseFloat($('markup38').value);
-    if (!(mk >= 0 && mk <= 200) || !(tx >= 0 && tx <= 100) || !(ex >= 0 && ex <= 300) || !(m38 >= 0 && m38 <= 300)) { msg('cfg-msg', 'Enter a markup between 0 and 200, a tax between 0 and 100, and 33 SWG and 38 SWG markups between 0 and 300.', true); return; }
-    if (mk === S.cfg.markupPct && tx === S.cfg.taxPct && ex === S.cfg.markup33 && m38 === S.cfg.markup38) return;
-    S.cfg = { markupPct: mk, taxPct: tx, markup33: ex, markup38: m38 }; renderAll();
+    function rd(g) { return active(g) ? S.cfg[MK[g]] : parseFloat($(INP[g]).value); }
+    var mk = rd('32'), ex = rd('33'), m38 = rd('38'), tx = parseFloat($('tax').value), learn = $('learn').checked;
+    if (!(mk >= 0 && mk <= 300) || !(tx >= 0 && tx <= 100) || !(ex >= 0 && ex <= 300) || !(m38 >= 0 && m38 <= 300)) { msg('cfg-msg', 'Enter markups between 0 and 300 and a tax between 0 and 100.', true); renderSummary(); return; }
+    if (mk === S.cfg.markupPct && tx === S.cfg.taxPct && ex === S.cfg.markup33 && m38 === S.cfg.markup38 && learn === S.cfg.learn) return;
+    S.cfg = { markupPct: mk, taxPct: tx, markup33: ex, markup38: m38, learn: learn }; renderAll();
+    if (S.local) { msg('cfg-msg', lsSet('art-cfg', S.cfg) ? 'Saved on this device.' : 'Changed for this visit only.'); return; }
     if (!S.db) { msg('cfg-msg', 'Changed for this visit only. Saving is not available in this view.'); return; }
     if (saving) return; saving = true;
-    S.db.doc('config/settings').set({ markupPct: mk, taxPct: tx, markup33: ex, markup38: m38, updatedAt: new Date().toISOString() }).then(
-      function () { saving = false; msg('cfg-msg', 'Saved: markup ' + mk + '%, tax ' + tx + '%, 33 SWG markup ' + ex + '%, 38 SWG markup ' + m38 + '%.'); },
-      function () { saving = false; msg('cfg-msg', 'Could not save the percentages. They apply to this visit only.', true); });
+    S.db.doc('config/settings').set({ markupPct: mk, taxPct: tx, markup33: ex, markup38: m38, learn: learn, updatedAt: new Date().toISOString() }).then(
+      function () { saving = false; msg('cfg-msg', 'Saved.'); },
+      function () { saving = false; msg('cfg-msg', 'Could not save the settings. They apply to this visit only.', true); });
   }
-  $('markup').addEventListener('change', saveCfg); $('tax').addEventListener('change', saveCfg); $('markup33').addEventListener('change', saveCfg); $('markup38').addEventListener('change', saveCfg);
+  ['markup', 'tax', 'markup33', 'markup38', 'learn'].forEach(function (i) { $(i).addEventListener('change', saveCfg); });
 
   $('quote-form').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var date = $('q-date').value, rate = parseFloat($('q-rate').value), mcx = parseFloat($('q-mcx').value);
     if (!isDate(date)) { msg('q-msg', 'Choose the date of the quote.', true); return; }
-    if (!okNum(rate)) { msg('q-msg', 'Enter the wire rate in ₹/kg, without GST.', true); return; }
-    if (!S.db) { msg('q-msg', 'Saving is not available in this view. Open the tracker in Claude to log quotes.', true); return; }
+    if (!okNum(rate)) { msg('q-msg', 'Enter the wire rate in ₹/kg.', true); return; }
+    if (!S.db && !S.local) { msg('q-msg', 'Saving is not available in this view.', true); return; }
+    if ($('q-incl').checked) rate = Math.round(rate / (1 + S.cfg.taxPct / 100) * 100) / 100;
     var doc = { date: date, supplier: $('q-supplier').value.trim(), gauge: ['33', '38'].indexOf($('q-gauge').value) >= 0 ? $('q-gauge').value : '32', rate: rate, note: $('q-note').value.trim(), createdAt: new Date().toISOString() };
     if (okNum(mcx)) doc.mcxAtQuote = mcx;
     $('q-save').disabled = true;
-    S.db.collection('quotes').add(doc).then(function () {
+    addQuote(doc).then(function () {
       $('q-save').disabled = false; $('q-rate').value = ''; $('q-mcx').value = ''; $('q-note').value = '';
-      msg('q-msg', 'Quote logged.');
+      msg('q-msg', 'Quote logged at ' + num(doc.rate) + ' before tax.');
     }, function () { $('q-save').disabled = false; msg('q-msg', 'Could not save the quote. Try again.', true); });
   });
 
@@ -489,8 +563,19 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   function start(db, user) {
     S.db = db;
-    if (!db) { S.ratesLoaded = true; $('status').textContent = 'Saved rates are not available in this view. Open the tracker in Claude to see them.'; lock(); renderLog(); return; }
-    if (user && user.can) Promise.resolve(user.can('data.write')).then(function (c) { if (c === false) { S.canWrite = false; lock(); } }, function () {});
+    if (!db) {
+      fetch('data.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
+        S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : '';
+        S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+        S.seed = Array.isArray(d.quotes) ? d.quotes : []; localQuotes();
+        var c = d.config || {}, mine = lsGet('art-cfg', {});
+        ['markupPct', 'taxPct', 'markup33', 'markup38'].forEach(function (k) { if (typeof mine[k] === 'number') S.cfg[k] = mine[k]; else if (typeof c[k] === 'number') S.cfg[k] = c[k]; });
+        S.cfg.learn = typeof mine.learn === 'boolean' ? mine.learn : c.learn !== false;
+        $('store-note').hidden = false; S.ratesLoaded = true; renderAll();
+      }, function () { S.ratesLoaded = true; lock(); $('status').textContent = 'Saved rates are not available in this view.'; });
+      return;
+    }
+    if (user && user.can) Promise.resolve(user.can('data.write')).then(function (c) { if (c === false) lock(); }, function () {});
     var timer = setTimeout(function () { if (!S.ratesLoaded) $('status').textContent = 'The saved rates cannot be reached yet. Still trying…'; }, 10000);
     function dead() { clearTimeout(timer); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
     db.collection('rates').onSnapshot(function (snap) {
@@ -500,13 +585,12 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       S.ratesLoaded = true; renderAll();
     }, dead);
     db.collection('quotes').onSnapshot(function (snap) {
-      S.quotes = snap.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, date: x.date, supplier: typeof x.supplier === 'string' ? x.supplier : '', rate: x.rate, mcxAtQuote: x.mcxAtQuote, gauge: x.gauge === '33' || x.gauge === '38' ? x.gauge : '32', note: typeof x.note === 'string' ? x.note : '' }; })
-        .filter(function (q) { return isDate(q.date) && okNum(q.rate); });
-      renderQuotes();
+      S.quotes = snap.docs.map(function (d) { return normQ(d.data() || {}, d.id); }).filter(function (q) { return isDate(q.date) && okNum(q.rate); });
+      renderAll();
     }, function () {});
     db.doc('config/settings').onSnapshot(function (d) {
       var x = d.exists ? d.data() : null;
-      if (x && typeof x.markupPct === 'number' && typeof x.taxPct === 'number') { S.cfg = { markupPct: x.markupPct, taxPct: x.taxPct, markup33: typeof x.markup33 === 'number' ? x.markup33 : 34.53, markup38: typeof x.markup38 === 'number' ? x.markup38 : 62.6 }; renderAll(); }
+      if (x && typeof x.markupPct === 'number' && typeof x.taxPct === 'number') { S.cfg = { markupPct: x.markupPct, taxPct: x.taxPct, markup33: typeof x.markup33 === 'number' ? x.markup33 : 34.53, markup38: typeof x.markup38 === 'number' ? x.markup38 : 62.6, learn: x.learn !== false }; renderAll(); }
     }, function () {});
     db.doc('status/lastRun').onSnapshot(function (d) { S.run = d.exists ? d.data() : null; renderStatus(); }, function () {});
   }

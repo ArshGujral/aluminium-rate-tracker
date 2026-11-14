@@ -24,6 +24,13 @@ winding wire prices by gauge, with a log of supplier quotes.
 The markup and tax percentages are editable on the page and saved in the artifact's
 database; the values in `tracker.html` are only starting defaults.
 
+## Learning the markup from supplier quotes
+
+Each logged quote gives a markup over MCX (quote before tax divided by the MCX rate).
+When learning is on, a gauge's markup is the average of its last 5 quotes; a gauge with
+no quotes uses the markup typed in. On the Pages copy, quotes and settings are saved in
+the browser on that device only.
+
 ## Buying signal
 
 Compares the latest close with the last 30 logged days: "Buy" when it is at least 1%
