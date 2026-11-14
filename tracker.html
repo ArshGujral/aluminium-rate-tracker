@@ -378,12 +378,15 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function renderChart() {
     var box = $('chart'), old = box.querySelector('svg'), tipOld = box.querySelector('.art-tip');
     if (old) old.remove(); if (tipOld) tipOld.remove();
-    document.querySelectorAll('[data-range]').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-range') === S.range); });
-    var pts = S.rates;
-    if (pts.length && S.range !== 'ALL') {
-      var c = parseD(pts[pts.length - 1].date); c.setMonth(c.getMonth() - (S.range === '1M' ? 1 : 3));
-      var cut = iso(c); pts = pts.filter(function (p) { return p.date >= cut; });
-    }
+    var pts = S.rates, range = S.range;
+    function cutFor(r) { var c = parseD(pts[pts.length - 1].date); c.setMonth(c.getMonth() - (r === '1M' ? 1 : 3)); return iso(c); }
+    // A range button is offered only when it would show less than the whole history.
+    document.querySelectorAll('[data-range]').forEach(function (b) {
+      var r = b.getAttribute('data-range'), same = r !== 'ALL' && (!pts.length || pts[0].date >= cutFor(r));
+      b.hidden = same; if (same && range === r) range = 'ALL';
+    });
+    document.querySelectorAll('[data-range]').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-range') === range); });
+    if (pts.length && range !== 'ALL') { var cut = cutFor(range); pts = pts.filter(function (p) { return p.date >= cut; }); }
     if (pts.length < 2) { $('chart-empty').hidden = false; $('gap-note').hidden = true; return; }
     $('chart-empty').hidden = true;
     var W = Math.max(280, box.clientWidth - 16), H = W < 460 ? 220 : 250, m = { l: 46, r: 58, t: 14, b: 26 };
