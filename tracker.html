@@ -86,6 +86,8 @@ body {
   display: block; width: 118px; aspect-ratio: 873 / 357; background: var(--ink); flex: none;
   -webkit-mask: url(xingz-logo-white.png) left center / contain no-repeat; mask: url(xingz-logo-white.png) left center / contain no-repeat;
 }
+.art-theme { width: 42px; height: 42px; min-height: 0; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; flex: none; }
+.art-theme svg { width: 20px; height: 20px; display: block; }
 .art-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
 .art-head h1 {
   font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1.2;
@@ -245,7 +247,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
 <main class="art-page">
   <header class="art-head">
-    <div class="art-head-row"><span class="art-logo" role="img" aria-label="Xing-Z"></span><button type="button" class="is-small" id="theme-btn">Day mode</button></div>
+    <div class="art-head-row"><span class="art-logo" role="img" aria-label="Xing-Z"></span><button type="button" class="art-theme" id="theme-btn" aria-label="Switch to day mode"></button></div>
     <h1>Aluminium Rate Tracker</h1>
     <p class="art-sub">Aluminium winding wire, up to 32 SWG, 33 SWG and 38 SWG, priced from the MCX aluminium close.</p>
     <p class="art-status" id="status">Loading saved rates…</p>
@@ -618,7 +620,10 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   document.querySelectorAll('[data-gauge]').forEach(function (b) { b.addEventListener('click', function () { S.gauge = b.getAttribute('data-gauge'); try { localStorage.setItem('gauge', S.gauge); } catch (e) {} renderAll(); }); });
   var root = document.documentElement;
   function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }
-  function themeLabel() { $('theme-btn').textContent = isDark() ? 'Day mode' : 'Night mode'; }
+  var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7 7 17M17 7l1.7-1.7"/></svg>';
+  var MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2z"/></svg>';
+  // The button shows where it takes you: a sun in night mode, a moon in day mode.
+  function themeLabel() { var d = isDark(), b = $('theme-btn'); b.innerHTML = d ? SUN : MOON; b.setAttribute('aria-label', d ? 'Switch to day mode' : 'Switch to night mode'); b.title = d ? 'Day mode' : 'Night mode'; }
   try { var st = localStorage.getItem('theme'); if (st === 'light' || st === 'dark') root.setAttribute('data-theme', st); } catch (e) {}
   $('theme-btn').addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next); try { localStorage.setItem('theme', next); } catch (e) {} themeLabel(); });
   themeLabel();
