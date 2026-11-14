@@ -295,8 +295,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   <section class="art-sec" id="log-sec">
     <div class="art-sec-head"><h2>Daily log</h2><p class="art-hint" id="log-span"></p></div>
     <div class="art-stats" id="log-stats" hidden>
-      <div class="art-stat"><span class="art-label">Lowest close</span><span class="art-stat-val" id="lo-val"></span><span class="art-meta" id="lo-meta"></span></div>
-      <div class="art-stat"><span class="art-label">Highest close</span><span class="art-stat-val" id="hi-val"></span><span class="art-meta" id="hi-meta"></span></div>
+      <div class="art-stat"><span class="art-label">Lowest rate with tax</span><span class="art-stat-val" id="lo-val"></span><span class="art-meta" id="lo-meta"></span></div>
+      <div class="art-stat"><span class="art-label">Highest rate with tax</span><span class="art-stat-val" id="hi-val"></span><span class="art-meta" id="hi-meta"></span></div>
     </div>
     <div class="art-scroll" id="log-wrap" hidden>
       <div class="art-log-head" aria-hidden="true"><span>Date<small>Day low – high</small></span><span>MCX close<small>Change</small></span><span>With tax<small>Before tax</small></span></div>
@@ -522,8 +522,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     var lo = pts[0], hi = pts[0];
     pts.forEach(function (p) { if (p.mcx < lo.mcx) lo = p; if (p.mcx > hi.mcx) hi = p; });
     $('log-span').textContent = fmtD(pts[0].date) + ' to ' + fmtD(pts[n - 1].date) + ' \u00b7 ' + n + ' days';
-    $('lo-val').textContent = num(lo.mcx); $('lo-meta').textContent = fmtD(lo.date) + ' \u00b7 with tax ' + whole(fin(lo.mcx));
-    $('hi-val').textContent = num(hi.mcx); $('hi-meta').textContent = fmtD(hi.date) + ' \u00b7 with tax ' + whole(fin(hi.mcx));
+    $('lo-val').textContent = '\u20b9' + whole(fin(lo.mcx)); $('lo-meta').textContent = fmtD(lo.date) + ' \u00b7 MCX close ' + num(lo.mcx);
+    $('hi-val').textContent = '\u20b9' + whole(fin(hi.mcx)); $('hi-meta').textContent = fmtD(hi.date) + ' \u00b7 MCX close ' + num(hi.mcx);
     for (i = n - 1; i >= 0; i--) {
       var r = pts[i], k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
       var d = el('td', { class: 'c-date', text: fmtD(r.date) }), both = okNum(r.low) && okNum(r.high);
