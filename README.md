@@ -8,8 +8,13 @@ winding wire prices by gauge, with a log of supplier quotes.
 - `tracker.html` — the page. It is published as a Claude artifact and reads its data
   (daily rates, supplier quotes, settings) from that artifact's database. Opened
   directly from this repository it shows no rates, because the data is not stored here.
-- `index.html` and `data.json` — a standalone copy for GitHub Pages. It shows a snapshot of
-  the rates, quotes and settings held in `data.json`; it does not update by itself.
+- `index.html` and `data.json` — a standalone copy for GitHub Pages. It shows the rates, quotes
+  and settings held in `data.json`.
+- `scripts/update_rates.py` and `.github/workflows/update-rates.yml` — the program that keeps
+  the website current. GitHub runs it three times each trading day: after the market closes it
+  records the session's last price with the day's low and high, and the next morning it replaces
+  that with the official close. It reads Dhan, Groww and MCX Live and writes a rate only when two
+  of them agree. It can also be started by hand from the Actions tab.
 - `daily-update-task.md` — the instructions for the scheduled task that logs the
   MCX aluminium close each trading day.
 
