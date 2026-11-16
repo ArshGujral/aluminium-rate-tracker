@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: "50 18 * * 1-5"  # 12:20 AM IST, Tue-Sat: record the session that just closed
     - cron: "30 1 * * 2-6"   # 7:00 AM IST, Tue-Sat: second try in case the first run failed
-    - cron: "15 5 * * 1-5"   # 10:45 AM IST, Mon-Fri: replace the last session's rate with its official close
+    - cron: "5 4-17 * * 1-5" # every hour from 9:35 AM to 10:35 PM IST, Mon-Fri: today's price so far, and the last session's official close
   workflow_dispatch:
     inputs:
       mode:

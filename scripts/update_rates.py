@@ -5,7 +5,7 @@ Run by .github/workflows/update-rates.yml. Two kinds of run, chosen from the tim
 
   postclose  the market is shut: record the finished session's last traded price with its day low and high.
   official   the market is open: the pages show the previous session's official close, so set that
-             session's rate to it.
+             session's rate to it. Today's price so far is also recorded, marked "live".
 
 A rate is written only when at least two sources agree. Nothing is ever estimated.
 """
@@ -173,7 +173,7 @@ def main():
 
     with open(DATA, encoding="utf-8") as f:
         data = json.load(f)
-    before = json.dumps(data, sort_keys=True)
+    before = json.dumps(data["rates"], sort_keys=True) + str(data.get("updatedAt"))
     rates = sorted(data["rates"], key=lambda r: r["date"])
     by_date = {r["date"]: r for r in rates}
 
@@ -203,6 +203,20 @@ def main():
                 rates.append({"date": ds, "mcx": pc, "contract": contract, "source": main_src["name"], "closeType": "official"})
             else:
                 log("Previous close %.2f does not fit the log; nothing changed." % pc)
+        # Today's price so far, from whichever agreeing source traded most recently. The post-close run replaces it.
+        live = agree([s["ltp"] for s in srcs], 1.0)
+        if live is not None and trade_date == today:
+            fresh = max((s for s in srcs if abs(s["ltp"] - live) <= 1.0), key=lambda s: s["stamp"])
+            ts, v, low, high = today.isoformat(), fresh["ltp"], fresh["low"], fresh["high"]
+            r = by_date.get(ts)
+            if sane(ts, v) and (r is None or r.get("closeType") == "live"):
+                if r is None:
+                    r = {"date": ts}
+                    rates.append(r)
+                r.update({"mcx": v, "contract": contract, "source": fresh["name"], "closeType": "live", "asOf": fresh["stamp"].strftime("%H:%M")})
+                if low is not None and high is not None and low <= v <= high:
+                    r["low"], r["high"] = low, high
+                log("Live %s: %.2f as of %s" % (ts, v, r["asOf"]))
     else:
         ltp = agree([s["ltp"] for s in srcs], 0.3 if not forced else 1.0)
         if ltp is None:
@@ -226,15 +240,17 @@ def main():
             r = {"date": ds, "mcx": ltp, "contract": contract, "source": main_src["name"], "closeType": "last"}
             rates.append(r)
             log("Adding %s: %.2f" % (ds, ltp))
-        elif r.get("closeType") != "official" and abs(r["mcx"] - ltp) > 0.004:
-            log("Updating %s: %.2f (was %.2f)" % (ds, ltp, r["mcx"]))
-            r["mcx"] = ltp
+        elif r.get("closeType") != "official" and (abs(r["mcx"] - ltp) > 0.004 or r.get("closeType") == "live"):
+            log("Closing %s: %.2f (was %.2f)" % (ds, ltp, r["mcx"]))
+            r["mcx"], r["closeType"], r["source"] = ltp, "last", main_src["name"]
+            r.pop("asOf", None)
         if low is not None and (r.get("low") != low or r.get("high") != high) and low <= r["mcx"] <= high:
             r["low"], r["high"] = low, high
 
     data["rates"] = sorted(rates, key=lambda r: r["date"])
     data["updatedAt"] = today.isoformat()
-    if json.dumps(data, sort_keys=True) == before:
+    data["updatedTime"] = now.strftime("%H:%M")
+    if json.dumps(data["rates"], sort_keys=True) + str(data.get("updatedAt")) == before:
         log("No change.")
         return 0
     if dry:

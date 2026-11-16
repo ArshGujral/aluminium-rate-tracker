@@ -266,7 +266,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   <section class="art-eq" aria-label="Rate calculation">
     <div class="art-term">
-      <span class="art-label">MCX aluminium close</span>
+      <span class="art-label" id="mcx-label">MCX aluminium close</span>
       <span class="art-big"><span id="mcx-val">—</span> <small>₹/kg</small></span>
       <span class="art-meta" id="mcx-meta">The first rate appears after the next daily update.</span>
     </div>
@@ -420,7 +420,9 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     $('mcx-val').textContent = num(last.mcx);
     $('ex-val').textContent = num(exTax(last.mcx));
     $('fin-val').textContent = whole(fin(last.mcx));
-    var meta = fmtD(last.date) + (last.contract ? ' · ' + last.contract + ' contract' : '');
+    var isLive = last.closeType === 'live';
+    $('mcx-label').textContent = isLive ? 'MCX aluminium, today so far' : 'MCX aluminium close';
+    var meta = fmtD(last.date) + (isLive && last.asOf ? ', ' + last.asOf : '') + (last.contract ? ' · ' + last.contract + ' contract' : '');
     if (prev) { var ch = last.mcx - prev.mcx; meta += ' · ' + signed(ch) + ' (' + signed(ch / prev.mcx * 100) + '%) since ' + fmtD(prev.date, true); }
     $('mcx-meta').textContent = meta;
     var age = Math.round((parseD(iso(new Date())) - parseD(last.date)) / 864e5);
@@ -439,14 +441,14 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     if (dev <= -1 && pos <= 1 / 3) { pill.textContent = 'Buy \u2014 price is low'; pill.classList.add('is-buy'); }
     else if (dev >= 1 && pos >= 2 / 3) { pill.textContent = 'Don\u2019t buy extra \u2014 price is high'; pill.classList.add('is-wait'); }
     else { pill.textContent = 'No clear signal \u2014 price is near average'; pill.classList.add('is-hold'); }
-    why.textContent = 'The latest close of ' + num(last) + ' is ' + (Math.abs(dev) < 0.05 ? 'level with' : Math.abs(dev).toFixed(1) + '% ' + (dev < 0 ? 'below' : 'above')) +
+    why.textContent = (win[win.length - 1].closeType === 'live' ? 'Today\u2019s price so far' : 'The latest close') + ' of ' + num(last) + ' is ' + (Math.abs(dev) < 0.05 ? 'level with' : Math.abs(dev).toFixed(1) + '% ' + (dev < 0 ? 'below' : 'above')) +
       ' the ' + num(avg) + ' average of the last ' + vals.length + ' logged days, and ' + Math.round(pos * 100) + '% of the way up their range of ' + num(lo) + ' to ' + num(hi) + '.';
   }
 
   function renderStatus() {
     var t = $('status'), r = S.run;
     if (!S.ratesLoaded) return;
-    if (S.local) { t.textContent = (S.snap ? 'Rates last checked ' + fmtD(S.snap) + ' \u00b7 ' : '') + S.rates.length + ' daily rates.'; return; }
+    if (S.local) { t.textContent = (S.snap ? 'Rates last checked ' + fmtD(S.snap) + (S.snapTime ? ', ' + S.snapTime : '') + ' \u00b7 ' : '') + S.rates.length + ' daily rates.'; return; }
     if (r && typeof r.at === 'string') {
       var d = new Date(r.at), when = isNaN(d) ? r.at : d.getDate() + ' ' + MON[d.getMonth()] + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       t.textContent = 'Last automatic check: ' + when + (r.ok === false ? ' — could not log a rate' : ' — ok') + (r.message ? '. ' + String(r.message).slice(0, 200) : '');
@@ -573,6 +575,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     for (i = n - 1; i >= 0; i--) {
       var r = pts[i], k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
       var d = el('td', { class: 'c-date', text: fmtD(r.date) }), both = okNum(r.low) && okNum(r.high);
+      if (r.closeType === 'live') d.append(el('span', { class: 'art-tag is-mark', text: 'Live' }));
       if (n > 1 && r === lo) d.append(el('span', { class: 'art-tag is-mark', text: 'Low' }));
       if (n > 1 && r === hi) d.append(el('span', { class: 'art-tag is-mark', text: 'High' }));
       body.append(el('tr', null, d,
@@ -668,7 +671,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     S.db = db;
     if (!db) {
       fetch('data.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
-        S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : '';
+        S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
         S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
         S.seed = Array.isArray(d.quotes) ? d.quotes : []; localQuotes();
         var c = d.config || {}, mine = lsGet('art-cfg', {});
@@ -682,7 +685,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     var timer = setTimeout(function () { if (!S.ratesLoaded) $('status').textContent = 'The saved rates cannot be reached yet. Still trying…'; }, 10000);
     function dead() { clearTimeout(timer); hideLoader(); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
     db.collection('rates').onSnapshot(function (snap) {
-      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, low: x.low, high: x.high, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
+      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, low: x.low, high: x.high, closeType: x.closeType, asOf: x.asOf, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
         .filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
       if (!snap.metadata || !snap.metadata.fromCache) clearTimeout(timer);
       S.ratesLoaded = true; renderAll();
