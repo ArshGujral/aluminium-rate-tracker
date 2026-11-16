@@ -131,6 +131,20 @@ def mcxlive():
             "low": num(float(hl.group(2))) if hl else None, "prev": None, "contract": c.group(1) if c else None}
 
 
+def fivepaisa_prev(today):
+    """5paisa's previous close, used only as one more vote for the official close. None unless the page is dated today."""
+    html = get("https://www.5paisa.com/commodity-trading/mcx-aluminium-price")
+    if not html:
+        return None
+    d = re.search(r"As on (\d{1,2}) ([A-Za-z]+),? (\d{4})", html)
+    p = re.search(r'id="prev_close"[^>]*>\s*([\d.]+)\s*<', html)
+    if not (d and p) or d.group(2)[:3].lower() not in MON:
+        return None
+    if dt.date(int(d.group(3)), MON[d.group(2)[:3].lower()], int(d.group(1))) != today:
+        return None
+    return num(float(p.group(1)))
+
+
 def agree(values, tol):
     """The first value that at least one other value matches within tol, else None."""
     for i, v in enumerate(values):
@@ -182,7 +196,16 @@ def main():
         return not earlier or abs(v - earlier[-1]["mcx"]) / earlier[-1]["mcx"] <= 0.12
 
     if mode == "official":
-        pc = agree([s["prev"] for s in srcs if s["prev"] is not None], 0.05)
+        prevs = [s["prev"] for s in srcs if s["prev"] is not None]
+        try:
+            fp = fivepaisa_prev(today)
+        except Exception as e:
+            log("  parse failed: 5paisa", repr(e))
+            fp = None
+        if fp is not None:
+            log("  5paisa   prev close %.2f" % fp)
+            prevs.append(fp)
+        pc = agree(prevs, 0.05)
         if pc is None:
             log("Previous close not confirmed by two sources. Nothing written.")
             return 1
