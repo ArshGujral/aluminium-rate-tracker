@@ -153,6 +153,8 @@ button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
 .art-stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .art-stat-val { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .art-log-head, .c-range { display: none; }
+tr.is-closed td { color: var(--muted); }
+tr.is-closed td.c-mcx { text-align: left; }
 .art-tag.is-mark { border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 6px; }
 .art-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .art-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
@@ -228,8 +230,10 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   table.is-log tr:last-child { border-bottom: 0; }
   table.is-log td { padding: 0; border: 0; text-align: right; min-width: 0; }
   table.is-log td.c-date { grid-area: date; text-align: left; font-weight: 600; }
-  table.is-log td.c-range { display: block; grid-area: range; text-align: left; font-size: 0.8rem; color: var(--muted); }
+  table.is-log td.c-range { display: block; grid-area: range; text-align: left; font-size: 0.8rem; color: var(--muted); white-space: normal; overflow-wrap: anywhere; }
   table.is-log td.c-mcx { grid-area: mcx; font-weight: 600; }
+  table.is-log tr.is-closed td.c-date, table.is-log tr.is-closed td.c-mcx { font-weight: 400; }
+  table.is-log tr.is-closed td.c-mcx { grid-column: 2 / 4; text-align: right; font-size: 0.86rem; }
   table.is-log td.c-chg { grid-area: chg; font-size: 0.8rem; }
   table.is-log td.c-fin { grid-area: fin; font-weight: 600; color: var(--accent); }
   table.is-log td.c-ex { grid-area: ex; font-size: 0.8rem; color: var(--muted); }
@@ -361,7 +365,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       </table>
     </div>
     <p class="art-empty" id="log-empty">No rates logged yet.</p>
-    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them. A session held on a special occasion is marked with its name.</p>
+    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them. Holidays and special sessions are named, and days with no trading are listed as closed.</p>
   </section>
 
   <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg. This is a reference for costing and negotiation, not a live quote.</p>
@@ -570,6 +574,12 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     });
   }
 
+  // MCX trading holidays, from the exchange's 2026 holiday list: closed all day, evening session only, or the Diwali Muhurat session.
+  var HOL = {
+    '2026-08-15': ['Independence Day', 'closed'], '2026-09-14': ['Ganesh Chaturthi', 'evening'], '2026-10-02': ['Mahatma Gandhi Jayanti', 'closed'],
+    '2026-10-20': ['Dassera', 'evening'], '2026-11-08': ['Diwali Laxmi Pujan', 'muhurat'], '2026-11-10': ['Diwali Balipratipada', 'evening'],
+    '2026-11-24': ['Guru Nanak Jayanti', 'evening'], '2026-12-25': ['Christmas', 'closed']
+  };
   function renderLog() {
     var body = $('log-rows'), pts = rangeView().pts, n = pts.length, i;
     body.replaceChildren();
@@ -577,19 +587,31 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     if (!n) { $('log-span').textContent = ''; return; }
     var lo = pts[0], hi = pts[0];
     pts.forEach(function (p) { if (p.mcx < lo.mcx) lo = p; if (p.mcx > hi.mcx) hi = p; });
-    $('log-span').textContent = fmtD(pts[0].date) + ' to ' + fmtD(pts[n - 1].date) + ' \u00b7 ' + n + ' days';
+    $('log-span').textContent = fmtD(pts[0].date) + ' to ' + fmtD(pts[n - 1].date) + ' \u00b7 ' + n + ' trading days';
     $('lo-val').textContent = '\u20b9' + whole(fin(lo.mcx)); $('lo-meta').textContent = fmtD(lo.date) + ' \u00b7 MCX close ' + num(lo.mcx);
     $('hi-val').textContent = '\u20b9' + whole(fin(hi.mcx)); $('hi-meta').textContent = fmtD(hi.date) + ' \u00b7 MCX close ' + num(hi.mcx);
-    for (i = n - 1; i >= 0; i--) {
-      var r = pts[i], k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
-      var d = el('td', { class: 'c-date', text: fmtD(r.date) }), both = okNum(r.low) && okNum(r.high);
-      if (r.note) d.append(el('span', { class: 'art-tag c-note', text: ' \u00b7 ' + r.note }));
+    var byDate = {}; pts.forEach(function (p) { byDate[p.date] = p; });
+    // Every calendar day in the period, newest first: trading days with their rate, the rest with why there is none.
+    for (var day = parseD(pts[n - 1].date), first = parseD(pts[0].date); day >= first; day.setDate(day.getDate() - 1)) {
+      var ds = iso(day), r = byDate[ds], h = HOL[ds], wd = day.getDay();
+      if (!r) {
+        var shut = (h && h[1] === 'closed') || wd === 0 || wd === 6, why = h ? h[0] : wd === 0 ? 'Sunday' : wd === 6 ? 'Saturday' : '';
+        var cd = el('td', { class: 'c-date', text: fmtD(ds) });
+        if (why) cd.append(el('span', { class: 'art-tag c-note', text: ' \u00b7 ' + why }));
+        body.append(el('tr', { class: 'is-closed' }, cd, el('td', { class: 'c-range', text: why }),
+          el('td', { class: 'c-mcx', colspan: '8', text: shut ? 'Market closed' : 'No rate recorded' })));
+        continue;
+      }
+      var k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
+      var note = r.note || (h ? h[0] + (h[1] === 'evening' ? ', evening session only' : h[1] === 'muhurat' ? ', Muhurat session' : '') : '');
+      var d = el('td', { class: 'c-date', text: fmtD(ds) }), both = okNum(r.low) && okNum(r.high);
+      if (note) d.append(el('span', { class: 'art-tag c-note', text: ' \u00b7 ' + note }));
       if (r.closeType === 'live') d.append(el('span', { class: 'art-tag is-mark', text: 'Live' }));
       if (n > 1 && r === lo) d.append(el('span', { class: 'art-tag is-mark', text: 'Low' }));
       if (n > 1 && r === hi) d.append(el('span', { class: 'art-tag is-mark', text: 'High' }));
       body.append(el('tr', null, d,
         el('td', { class: 'c-low', text: okNum(r.low) ? num(r.low) : '\u2014' }), el('td', { class: 'c-high', text: okNum(r.high) ? num(r.high) : '\u2014' }),
-        el('td', { class: 'c-range', text: (r.note ? r.note + (both ? ' \u00b7 ' : '') : '') + (both ? num(r.low) + ' \u2013 ' + num(r.high) : '') }),
+        el('td', { class: 'c-range', text: (note ? note + (both ? ' \u00b7 ' : '') : '') + (both ? num(r.low) + ' \u2013 ' + num(r.high) : '') }),
         el('td', { class: 'c-mcx', text: num(r.mcx) }),
         el('td', { class: 'c-chg' + (ch == null || Math.abs(ch) < 0.005 ? '' : ch > 0 ? ' is-over' : ' is-under'), text: ch == null ? '\u2014' : signed(ch) }),
         el('td', { class: 'c-ex', text: num(exTax(r.mcx)) }), el('td', { class: 'c-fin', text: whole(fin(r.mcx)) }),
