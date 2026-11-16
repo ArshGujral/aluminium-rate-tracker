@@ -215,7 +215,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   #q-save { width: 100%; }
   th, td { padding: 10px 8px; }
   th { letter-spacing: 0.03em; }
-  .is-opt, .c-low, .c-high { display: none; }
+  .is-opt, .c-low, .c-high, .c-note { display: none; }
   .art-stat { padding: 10px 12px; }
   .art-log-head, table.is-log tr { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.9fr); column-gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
   .art-log-head { font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -352,7 +352,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       <div class="art-stat"><span class="art-label">Highest rate with tax</span><span class="art-stat-val" id="hi-val"></span><span class="art-meta" id="hi-meta"></span></div>
     </div>
     <div class="art-scroll" id="log-wrap" hidden>
-      <div class="art-log-head" aria-hidden="true"><span>Date<small>Day low – high</small></span><span>MCX close<small>Change</small></span><span>With tax<small>Before tax</small></span></div>
+      <div class="art-log-head" aria-hidden="true"><span>Date<small>Occasion · day low – high</small></span><span>MCX close<small>Change</small></span><span>With tax<small>Before tax</small></span></div>
       <table class="is-log">
         <thead><tr>
           <th>Date</th><th>Day low</th><th>Day high</th><th>MCX close</th><th>Change</th><th>Before tax</th><th>With tax</th><th class="is-text is-opt">Contract</th><th class="is-text is-opt">Source</th>
@@ -361,7 +361,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       </table>
     </div>
     <p class="art-empty" id="log-empty">No rates logged yet.</p>
-    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them.</p>
+    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them. A session held on a special occasion is marked with its name.</p>
   </section>
 
   <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg. This is a reference for costing and negotiation, not a live quote.</p>
@@ -583,12 +583,13 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     for (i = n - 1; i >= 0; i--) {
       var r = pts[i], k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
       var d = el('td', { class: 'c-date', text: fmtD(r.date) }), both = okNum(r.low) && okNum(r.high);
+      if (r.note) d.append(el('span', { class: 'art-tag c-note', text: ' \u00b7 ' + r.note }));
       if (r.closeType === 'live') d.append(el('span', { class: 'art-tag is-mark', text: 'Live' }));
       if (n > 1 && r === lo) d.append(el('span', { class: 'art-tag is-mark', text: 'Low' }));
       if (n > 1 && r === hi) d.append(el('span', { class: 'art-tag is-mark', text: 'High' }));
       body.append(el('tr', null, d,
         el('td', { class: 'c-low', text: okNum(r.low) ? num(r.low) : '\u2014' }), el('td', { class: 'c-high', text: okNum(r.high) ? num(r.high) : '\u2014' }),
-        el('td', { class: 'c-range', text: both ? num(r.low) + ' \u2013 ' + num(r.high) : '' }),
+        el('td', { class: 'c-range', text: (r.note ? r.note + (both ? ' \u00b7 ' : '') : '') + (both ? num(r.low) + ' \u2013 ' + num(r.high) : '') }),
         el('td', { class: 'c-mcx', text: num(r.mcx) }),
         el('td', { class: 'c-chg' + (ch == null || Math.abs(ch) < 0.005 ? '' : ch > 0 ? ' is-over' : ' is-under'), text: ch == null ? '\u2014' : signed(ch) }),
         el('td', { class: 'c-ex', text: num(exTax(r.mcx)) }), el('td', { class: 'c-fin', text: whole(fin(r.mcx)) }),
@@ -693,7 +694,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     var timer = setTimeout(function () { if (!S.ratesLoaded) $('status').textContent = 'The saved rates cannot be reached yet. Still trying…'; }, 10000);
     function dead() { clearTimeout(timer); hideLoader(); S.ratesLoaded = true; $('status').textContent = 'The saved rates could not be loaded. Reopen the tracker to try again.'; }
     db.collection('rates').onSnapshot(function (snap) {
-      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, low: x.low, high: x.high, closeType: x.closeType, asOf: x.asOf, contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
+      S.rates = snap.docs.map(function (d) { var x = d.data() || {}; return { date: isDate(x.date) ? x.date : d.id, mcx: x.mcx, low: x.low, high: x.high, closeType: x.closeType, asOf: x.asOf, note: typeof x.note === 'string' ? x.note.slice(0, 60) : '', contract: typeof x.contract === 'string' ? x.contract : '', source: typeof x.source === 'string' ? x.source : '' }; })
         .filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
       if (!snap.metadata || !snap.metadata.fromCache) clearTimeout(timer);
       S.ratesLoaded = true; renderAll();
