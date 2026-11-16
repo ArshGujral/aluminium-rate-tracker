@@ -424,7 +424,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     if (prev) { var ch = last.mcx - prev.mcx; meta += ' · ' + signed(ch) + ' (' + signed(ch / prev.mcx * 100) + '%) since ' + fmtD(prev.date, true); }
     $('mcx-meta').textContent = meta;
     var age = Math.round((parseD(iso(new Date())) - parseD(last.date)) / 864e5);
-    if (age > 4) { $('stale').hidden = false; $('stale').textContent = 'The latest rate is from ' + fmtD(last.date) + ', ' + age + ' days ago. ' + (S.local ? 'This website shows a snapshot and is not updated daily, so' : 'The daily update may not have run, so') + ' check the MCX rate before using these figures.'; }
+    if (age > 4) { $('stale').hidden = false; $('stale').textContent = 'The latest rate is from ' + fmtD(last.date) + ', ' + age + ' days ago. ' + 'The daily update may not have run, so' + ' check the MCX rate before using these figures.'; }
     else $('stale').hidden = true;
   }
 
@@ -446,7 +446,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function renderStatus() {
     var t = $('status'), r = S.run;
     if (!S.ratesLoaded) return;
-    if (S.local) { t.textContent = 'Snapshot' + (S.snap ? ' of ' + fmtD(S.snap) : '') + ' \u00b7 ' + S.rates.length + ' daily rates.'; return; }
+    if (S.local) { t.textContent = (S.snap ? 'Rates last checked ' + fmtD(S.snap) + ' \u00b7 ' : '') + S.rates.length + ' daily rates. Updated each morning after a trading day.'; return; }
     if (r && typeof r.at === 'string') {
       var d = new Date(r.at), when = isNaN(d) ? r.at : d.getDate() + ' ' + MON[d.getMonth()] + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       t.textContent = 'Last automatic check: ' + when + (r.ok === false ? ' — could not log a rate' : ' — ok') + (r.message ? '. ' + String(r.message).slice(0, 200) : '');

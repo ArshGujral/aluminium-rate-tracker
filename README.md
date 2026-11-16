@@ -8,8 +8,8 @@ winding wire prices by gauge, with a log of supplier quotes.
 - `tracker.html` — the page. It is published as a Claude artifact and reads its data
   (daily rates, supplier quotes, settings) from that artifact's database. Opened
   directly from this repository it shows no rates, because the data is not stored here.
-- `index.html` and `data.json` — a standalone copy for GitHub Pages. It shows a snapshot of
-  the rates, quotes and settings held in `data.json`; it does not update by itself.
+- `index.html` and `data.json` — a standalone copy for GitHub Pages. It shows the rates, quotes
+  and settings held in `data.json`. The daily update task adds each new rate to `data.json`.
 - `daily-update-task.md` — the instructions for the scheduled task that logs the
   MCX aluminium close each trading day.
 

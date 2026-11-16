@@ -38,3 +38,9 @@ recorded as failed. Prices are never estimated or carried forward.
 - `rates/<YYYY-MM-DD>`: `{date, mcx, contract, source, loggedBy: "auto"}`, plus `low` and
   `high` (the day's low and high) when a dated source shows them for that trade date
 - `status/lastRun`: `{at, ok, message}`
+
+## Website copy
+
+After logging, the task copies the tracker's latest 15 rates into `data.json` in this
+repository, sets `updatedAt` to the day's date and pushes to `main`, which republishes the
+GitHub Pages site. It changes no other file.
