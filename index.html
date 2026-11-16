@@ -454,7 +454,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function renderStatus() {
     var t = $('status'), r = S.run;
     if (!S.ratesLoaded) return;
-    if (S.local) { t.textContent = (S.snap ? 'Rates last checked ' + fmtD(S.snap) + ' \u00b7 ' : '') + S.rates.length + ' daily rates. Updated each morning after a trading day.'; return; }
+    if (S.local) { t.textContent = (S.snap ? 'Rates last checked ' + fmtD(S.snap) + ' \u00b7 ' : '') + S.rates.length + ' daily rates.'; return; }
     if (r && typeof r.at === 'string') {
       var d = new Date(r.at), when = isNaN(d) ? r.at : d.getDate() + ' ' + MON[d.getMonth()] + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       t.textContent = 'Last automatic check: ' + when + (r.ok === false ? ' — could not log a rate' : ' — ok') + (r.message ? '. ' + String(r.message).slice(0, 200) : '');
