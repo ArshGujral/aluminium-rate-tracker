@@ -387,6 +387,16 @@
    "low": 326.15,
    "high": 329.3,
    "closeType": "official"
+  },
+  {
+   "date": "2026-11-16",
+   "mcx": 326.95,
+   "contract": "30 Nov 2026",
+   "source": "Groww",
+   "closeType": "live",
+   "asOf": "18:17",
+   "low": 324.75,
+   "high": 328.05
   }
  ],
  "quotes": [
@@ -398,5 +408,6 @@
    "note": "32 SWG, rate you shared in chat",
    "id": "q-2026-10-23-a"
   }
- ]
+ ],
+ "updatedTime": "18:17"
 }
