@@ -18,6 +18,12 @@ winding wire prices by gauge, with a log of supplier quotes.
 - `daily-update-task.md` — the instructions for the scheduled task that logs the
   MCX aluminium close each trading day.
 
+## Running it on your own computer
+
+On Windows, double-click `start-local.bat`. It downloads the latest saved rates, checks the MCX
+rate once, and opens the tracker at http://localhost:8765/. It needs Python installed. Keep its
+window open while you use the tracker and close it to stop.
+
 ## Pricing rules on the page
 
 | Gauge | Before tax | With tax |
