@@ -678,7 +678,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function start(db, user) {
     S.db = db;
     if (!db) {
-      fetch('data.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
+      fetch('data.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
         S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
         S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
         S.seed = Array.isArray(d.quotes) ? d.quotes : []; localQuotes();
