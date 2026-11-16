@@ -1,8 +1,28 @@
 name: Update MCX aluminium rate
+
+# Times are UTC. India is UTC+5:30 and MCX trades Monday to Friday, about 9:00 AM to 11:30 PM (11:55 PM in winter).
 on:
+  schedule:
+    - cron: "50 18 * * 1-5"  # 12:20 AM IST, Tue-Sat: record the session that just closed
+    - cron: "30 1 * * 2-6"   # 7:00 AM IST, Tue-Sat: second try in case the first run failed
+    - cron: "15 5 * * 1-5"   # 10:45 AM IST, Mon-Fri: replace the last session's rate with its official close
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Leave empty to choose automatically, or force: postclose / official"
+        required: false
+        default: ""
+      dry_run:
+        description: "true = show what would change without saving"
+        required: false
+        default: "false"
+
 permissions:
   contents: write
+  pages: write
+
+concurrency: update-rates
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -11,4 +31,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python scripts/probe.py
+      - name: Fetch the rate and update data.json
+        env:
+          MODE: ${{ inputs.mode }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python scripts/update_rates.py
+      - name: Publish the change
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data.json; then
+            echo "Nothing to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Daily rate update" -- data.json
+          git push
+          # A push made by a workflow may not start a Pages build on its own, so ask for one.
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || true
