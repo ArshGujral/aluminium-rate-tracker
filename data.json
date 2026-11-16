@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-14",
+ "updatedAt": "2026-11-16",
  "config": {
   "markupPct": 33,
   "taxPct": 9,
@@ -381,11 +381,12 @@
   },
   {
    "date": "2026-11-13",
-   "mcx": 327.25,
+   "mcx": 327.55,
    "contract": "30 Nov 2026",
    "source": "Dhan",
    "low": 326.15,
-   "high": 329.3
+   "high": 329.3,
+   "closeType": "official"
   }
  ],
  "quotes": [
