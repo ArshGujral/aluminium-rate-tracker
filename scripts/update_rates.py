@@ -206,15 +206,20 @@ def main():
             log("  5paisa   prev close %.2f" % fp)
             prevs.append(fp)
         pc = agree(prevs, 0.05)
-        if pc is None:
-            log("Previous close not confirmed by two sources. Nothing written.")
-            return 1
         earlier = [r for r in rates if r["date"] < today.isoformat()]
         last = earlier[-1] if earlier else None
-        if last and (today - dt.date.fromisoformat(last["date"])).days <= 5 and abs(last["mcx"] - pc) <= 1.0:
+        if pc is None:
+            # Not fatal: today's price is still recorded below, and every hourly run tries the close again.
+            log("Previous close not confirmed by two sources (seen: %s). Will try again next run." %
+                (", ".join("%.2f" % p for p in prevs) or "none"))
+            if last and last.get("closeType") != "official":
+                log("  %s stays as %.2f (%s) for now." % (last["date"], last["mcx"], last.get("closeType", "unmarked")))
+        elif last and (today - dt.date.fromisoformat(last["date"])).days <= 5 and abs(last["mcx"] - pc) <= 1.0:
             if abs(last["mcx"] - pc) > 0.004 or last.get("closeType") != "official":
                 log("Official close for %s: %.2f (was %.2f)" % (last["date"], pc, last["mcx"]))
                 last["mcx"], last["closeType"] = pc, "official"
+            else:
+                log("Official close for %s already confirmed: %.2f" % (last["date"], pc))
         else:
             # The post-close run missed the last session. Its close is known; date it to the previous weekday.
             d = today - dt.timedelta(days=1)
