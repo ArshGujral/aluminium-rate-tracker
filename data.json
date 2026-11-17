@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-17",
+ "updatedAt": "2026-11-18",
  "config": {
   "markupPct": 33,
   "taxPct": 9,
@@ -400,12 +400,11 @@
   },
   {
    "date": "2026-11-17",
-   "mcx": 328.35,
+   "mcx": 323.95,
    "contract": "30 Nov 2026",
-   "source": "Groww",
-   "closeType": "live",
-   "asOf": "18:27",
-   "low": 325.1,
+   "source": "Dhan",
+   "closeType": "last",
+   "low": 322.85,
    "high": 330.5
   }
  ],
@@ -419,5 +418,5 @@
    "id": "q-2026-10-23-a"
   }
  ],
- "updatedTime": "18:28"
+ "updatedTime": "03:07"
 }
