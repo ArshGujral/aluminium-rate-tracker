@@ -13,7 +13,7 @@ winding wire prices by gauge, with a log of supplier quotes.
 - `scripts/update_rates.py` and `.github/workflows/update-rates.yml` — the program that keeps
   the website current. GitHub runs it three times each trading day: after the market closes it
   records the session's last price with the day's low and high, and the next morning it replaces
-  that with the official close. It reads Dhan, Groww and MCX Live and writes a rate only when two
+  that with the official close. It reads Dhan, Groww, Moneycontrol and MCX Live (with 5paisa for the previous close) and writes a rate only when two
   of them agree. It can also be started by hand from the Actions tab.
 - `daily-update-task.md` — the instructions for the scheduled task that logs the
   MCX aluminium close each trading day.

@@ -32,9 +32,9 @@ def log(*a):
     print(*a, flush=True)
 
 
-def get(url):
+def get(url, accept=None):
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=dict(UA, Accept=accept or UA["Accept"])), timeout=30) as r:
             return r.read().decode("utf-8", "replace")
     except Exception as e:  # a source being down is expected now and then
         log("  fetch failed:", url, repr(e))
@@ -114,21 +114,43 @@ def groww():
     return None
 
 
+def moneycontrol():
+    # The page names the contract it shows (the near month); its price feed needs that expiry date.
+    nd = next_data(get("https://www.moneycontrol.com/commodity/mcx-aluminium-price/") or "")
+    exp = None
+    for d in walk(nd or {}):
+        de = d.get("default_expiry")
+        if isinstance(de, list) and de and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(de[0])):
+            exp = dt.date.fromisoformat(de[0])
+            break
+    if not exp:
+        return None
+    raw = get("https://priceapi.moneycontrol.com/pricefeed/mcx/commodityfutures/ALUMINIUM?expiry=" + exp.isoformat(), "application/json")
+    d = (json.loads(raw).get("data") or {}) if raw else {}
+    f = lambda k: num(float(d[k])) if re.fullmatch(r"\d+(\.\d+)?", str(d.get(k, ""))) else None
+    t = re.fullmatch(r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})\d{2}", str(d.get("lastupd", "")))
+    if not t or d.get("EXPIRY") != exp.isoformat():
+        return None
+    stamp = dt.datetime(*map(int, t.groups()), tzinfo=IST)
+    return {"name": "Moneycontrol", "stamp": stamp, "ltp": f("lastPrice"), "high": f("highPrice"), "low": f("lowPrice"),
+            "prev": f("prevClose"), "contract": "%d %s %d" % (exp.day, MON_NAME[exp.month - 1], exp.year)}
+
+
 def mcxlive():
+    # Since its Nov 2026 redesign the page carries its data as window.FD_FEED; t_datetime is in UTC.
     html = get("https://mcxlive.org/aluminium/")
-    if not html:
+    i = (html or "").find("window.FD_FEED=")
+    if i < 0:
         return None
-    a = re.search(r"As on \w+, \d{1,2} [A-Za-z]{3} (\d{4})", html)
-    lt = re.search(r"Last Trade on (\d{1,2}) ([A-Za-z]{3}) (\d{1,2}):(\d{2}) ([AP]M)", html)
-    p = re.search(r'class="main-change[^"]*">(?:\s*<i[^>]*></i>)?\s*([\d.]+)\s*</td>', html)
-    if not (a and lt and p):
+    d = json.JSONDecoder().raw_decode(html, i + len("window.FD_FEED="))[0]
+    t = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):\d{2}", str(d.get("t_datetime", "")))
+    e = re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(d.get("expiry", "")))
+    if not t:
         return None
-    h, mi = clock(lt.group(3), lt.group(4), lt.group(5))
-    stamp = dt.datetime(int(a.group(1)), MON[lt.group(2).lower()], int(lt.group(1)), h % 24, mi, tzinfo=IST)
-    hl = re.search(r'<td class="main-sub">\s*([\d.]+)</td>\s*<td class="main-sub">\s*([\d.]+)</td>', html)
-    c = re.search(r'<h2 class="main-head">MCX Aluminium (\d{1,2} [A-Za-z]{3} \d{4})</h2>', html)
-    return {"name": "MCX Live", "stamp": stamp, "ltp": num(float(p.group(1))), "high": num(float(hl.group(1))) if hl else None,
-            "low": num(float(hl.group(2))) if hl else None, "prev": None, "contract": c.group(1) if c else None}
+    stamp = dt.datetime(*map(int, t.groups()), tzinfo=dt.timezone.utc).astimezone(IST)
+    exp = dt.date.fromisoformat(d["expiry"]) if e else None
+    return {"name": "MCX Live", "stamp": stamp, "ltp": num(d.get("last")), "high": num(d.get("high")), "low": num(d.get("low")),
+            "prev": num(d.get("close")), "contract": "%d %s %d" % (exp.day, MON_NAME[exp.month - 1], exp.year) if exp else None}
 
 
 def fivepaisa_prev(today):
@@ -159,7 +181,7 @@ def main():
     now = dt.datetime.now(IST)
     today = now.date()
     srcs = []
-    for fn in (dhan, groww, mcxlive):
+    for fn in (dhan, groww, moneycontrol, mcxlive):
         try:
             s = fn()
         except Exception as e:
@@ -167,7 +189,7 @@ def main():
             s = None
         if s and s["ltp"] is not None:
             srcs.append(s)
-            log("  %-8s ltp %.2f  high %s  low %s  prev close %s  at %s  contract %s" % (
+            log("  %-12s ltp %.2f  high %s  low %s  prev close %s  at %s  contract %s" % (
                 s["name"], s["ltp"], s["high"], s["low"], s["prev"], s["stamp"].strftime("%d %b %Y %H:%M"), s["contract"]))
     if len(srcs) < 2:
         log("Fewer than two sources answered. Nothing written.")
