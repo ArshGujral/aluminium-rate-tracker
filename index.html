@@ -145,6 +145,27 @@ button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
   padding: 14px 18px; display: flex; flex-direction: column; gap: 8px;
 }
 .art-signal-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+/* On wide screens the range meter fills the right of the signal card; it drops under the text on narrow ones. */
+.art-signal-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (min-width: 761px) {
+  .art-signal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); column-gap: 36px; align-items: center; }
+  .art-meter { border-left: 1px solid var(--line); padding-left: 32px; }
+}
+.art-meter { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (max-width: 760px) { .art-meter { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); } }
+.art-meter[hidden] { display: none; }
+.art-meter-track { position: relative; display: flex; height: 30px; margin-top: 4px; border-radius: 7px; overflow: visible; }
+.art-meter-track .z { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+.art-meter-track .z-buy { background: var(--good-soft); color: var(--good); border-radius: 7px 0 0 7px; }
+.art-meter-track .z-mid { background: var(--accent-soft); opacity: 0.6; }
+.art-meter-track .z-wait { background: var(--warn-soft); color: var(--warn); border-radius: 0 7px 7px 0; }
+.art-meter-track .m-avg { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--muted); border-radius: 1px; }
+.art-meter-track .m-now { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--surface); }
+.art-meter-ends { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.art-meter-key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+.art-meter-key > span { display: inline-flex; align-items: center; gap: 6px; }
+.art-meter-key .k-now { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.art-meter-key .k-avg { width: 2px; height: 12px; background: var(--muted); }
 .art-pill {
   display: inline-block; padding: 4px 13px; border-radius: 999px; font-weight: 600;
   border: 1px solid var(--line); color: var(--muted);
@@ -318,9 +339,20 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   <p class="art-msg" id="cfg-msg" aria-live="polite"></p>
 
   <section class="art-signal" id="signal" aria-label="Buying signal">
+    <div class="art-signal-text">
     <div class="art-signal-main"><span class="art-label">Buying signal</span><span class="art-pill" id="sig-pill">Loading…</span></div>
     <p class="art-hint" id="sig-why"></p>
     <p class="art-hint" id="sig-rule">Rule: Buy when the close is at least 1% below the average of the last 30 logged days and in the bottom third of their range. Don't buy extra when it is at least 1% above and in the top third. It compares past prices only and cannot predict the next move.</p>
+    </div>
+    <div class="art-meter" id="sig-meter" hidden>
+      <span class="art-label" id="m-title">Last 30 logged days</span>
+      <div class="art-meter-track" aria-hidden="true">
+        <span class="z z-buy">Buy</span><span class="z z-mid"></span><span class="z z-wait">Don&#8217;t buy extra</span>
+        <i class="m-avg" id="m-avg"></i><b class="m-now" id="m-now"></b>
+      </div>
+      <div class="art-meter-ends"><span id="m-lo"></span><span id="m-hi"></span></div>
+      <div class="art-meter-key"><span><b class="k-now"></b><span id="m-now-t"></span></span><span><i class="k-avg"></i><span id="m-avg-t"></span></span></div>
+    </div>
   </section>
 
   <section class="art-sec" id="chart-sec">
@@ -459,6 +491,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function renderSignal() {
     var pill = $('sig-pill'), why = $('sig-why'), win = S.rates.slice(-30), i, sum = 0;
     pill.className = 'art-pill';
+    $('sig-meter').hidden = true;
     if (win.length < 10) { pill.textContent = S.ratesLoaded ? 'Not enough data' : 'Loading\u2026'; why.textContent = S.ratesLoaded ? 'A signal appears once 10 daily rates are logged.' : ''; return; }
     var vals = win.map(function (r) { return r.mcx; }), last = vals[vals.length - 1];
     for (i = 0; i < vals.length; i++) sum += vals[i];
@@ -469,6 +502,13 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     else { pill.textContent = 'No clear signal \u2014 price is near average'; pill.classList.add('is-hold'); }
     why.textContent = (win[win.length - 1].closeType === 'live' ? 'Today\u2019s price so far' : 'The latest close') + ' of ' + num(last) + ' is ' + (Math.abs(dev) < 0.05 ? 'level with' : Math.abs(dev).toFixed(1) + '% ' + (dev < 0 ? 'below' : 'above')) +
       ' the ' + num(avg) + ' average of the last ' + vals.length + ' logged days, and ' + Math.round(pos * 100) + '% of the way up their range of ' + num(lo) + ' to ' + num(hi) + '.';
+    var at = function (v) { var f = hi > lo ? (v - lo) / (hi - lo) : 0.5; return 'calc(8px + ' + f + ' * (100% - 16px))'; };
+    $('m-title').textContent = 'Last ' + vals.length + ' logged days';
+    $('m-now').style.left = at(last); $('m-avg').style.left = at(avg);
+    $('m-lo').textContent = 'Low ' + num(lo); $('m-hi').textContent = 'High ' + num(hi);
+    $('m-now-t').textContent = (win[win.length - 1].closeType === 'live' ? 'Today ' : 'Latest ') + num(last);
+    $('m-avg-t').textContent = 'Average ' + num(avg);
+    $('sig-meter').hidden = false;
   }
 
   function renderStatus() {
