@@ -707,7 +707,22 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function start(db, user) {
     S.db = db;
     if (!db) {
+      // The rates change during the trading day, so an open page fetches them again every few minutes and on return to the tab.
+      var refresh = function () {
+        if (document.hidden) return;
+        var a = document.activeElement;
+        if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
+        fetch('data.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
+          if (d.updatedAt === S.snap && d.updatedTime === S.snapTime) return;
+          S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
+          S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+          renderAll();
+        }, function () {});
+      };
       fetch('data.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
+        setInterval(refresh, 3 * 60 * 1000);
+        document.addEventListener('visibilitychange', refresh);
+        window.addEventListener('pageshow', function (e) { if (e.persisted) refresh(); });
         S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
         S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
         S.seed = Array.isArray(d.quotes) ? d.quotes : []; localQuotes();
