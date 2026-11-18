@@ -1,11 +1,15 @@
 name: Update MCX aluminium rate
 
 # Times are UTC. India is UTC+5:30 and MCX trades Monday to Friday, about 9:00 AM to 11:30 PM (11:55 PM in winter).
+# GitHub often skips scheduled runs on small repos, so every job has backup times at uneven minutes; a run with nothing new saves nothing.
 on:
   schedule:
-    - cron: "50 18 * * 1-5"  # 12:20 AM IST, Tue-Sat: record the session that just closed
-    - cron: "30 1 * * 2-6"   # 7:00 AM IST, Tue-Sat: second try in case the first run failed
-    - cron: "5 4-17 * * 1-5" # every hour from 9:35 AM to 10:35 PM IST, Mon-Fri: today's price so far, and the last session's official close
+    - cron: "50 18 * * 1-5"   # 12:20 AM IST, Tue-Sat: record the session that just closed
+    - cron: "20 19 * * 1-5"   # 12:50 AM IST, Tue-Sat: backup for the run above
+    - cron: "45 20 * * 1-5"   # 2:15 AM IST, Tue-Sat: second backup
+    - cron: "30 1 * * 2-6"    # 7:00 AM IST, Tue-Sat: last try in case the night runs failed
+    - cron: "5 4-17 * * 1-5"  # every hour from 9:35 AM to 10:35 PM IST, Mon-Fri: today's price so far, and the last session's official close
+    - cron: "47 3-17 * * 1-5" # every hour from 9:17 AM to 11:17 PM IST, Mon-Fri: backup for the hourly run
   workflow_dispatch:
     inputs:
       mode:
