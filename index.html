@@ -159,6 +159,12 @@ button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
 tr.is-closed td { color: var(--muted); }
 tr.is-closed td.c-mcx { text-align: left; }
 .art-tag.is-mark { border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 6px; }
+/* Long holiday notes go on their own line under the date, so the date column stays narrow and the log fits without scrolling. */
+table.is-log td.c-date { white-space: normal; min-width: 7.5em; }
+table.is-log td.c-date .c-note { display: block; }
+table.is-log td.c-date .art-tag.is-mark { display: inline-block; white-space: nowrap; }
+/* The save message takes no room until it has something to say. */
+#cfg-msg:empty { min-height: 0; margin-top: -28px; }
 .art-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .art-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .art-sec { display: flex; flex-direction: column; gap: 12px; }
@@ -203,6 +209,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 @media (max-width: 660px) {
   body { font-size: 16px; }
   .art-page { padding-block: 18px 36px; gap: 22px; }
+  #cfg-msg:empty { margin-top: -22px; }
   .art-head h1 { font-size: 1.4rem; }
   .art-term + .art-term { border-left: 0; border-top: 1px solid var(--line); }
   .art-term { flex-basis: 100%; padding: 14px 16px; }
@@ -221,6 +228,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   th, td { padding: 10px 8px; }
   th { letter-spacing: 0.03em; }
   .is-opt, .c-low, .c-high, .c-note { display: none; }
+  table.is-log td.c-date .c-note { display: none; }
   .art-stat { padding: 10px 12px; }
   .art-log-head, table.is-log tr { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.9fr); column-gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
   .art-log-head { font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -603,7 +611,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       if (!r) {
         var shut = (h && h[1] === 'closed') || wd === 0 || wd === 6, why = h ? h[0] : wd === 0 ? 'Sunday' : wd === 6 ? 'Saturday' : '';
         var cd = el('td', { class: 'c-date', text: fmtD(ds) });
-        if (why) cd.append(el('span', { class: 'art-tag c-note', text: ' \u00b7 ' + why }));
+        if (why) cd.append(el('span', { class: 'art-tag c-note', text: why }));
         body.append(el('tr', { class: 'is-closed' }, cd, el('td', { class: 'c-range', text: why }),
           el('td', { class: 'c-mcx', colspan: '8', text: shut ? 'Market closed' : 'No rate recorded' })));
         continue;
@@ -611,7 +619,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       var k = S.rates.indexOf(r), p = k > 0 ? S.rates[k - 1] : null, ch = p ? r.mcx - p.mcx : null;
       var note = r.note || (h ? h[0] + (h[1] === 'evening' ? ', evening session only' : h[1] === 'muhurat' ? ', Muhurat session' : '') : '');
       var d = el('td', { class: 'c-date', text: fmtD(ds) }), both = okNum(r.low) && okNum(r.high);
-      if (note) d.append(el('span', { class: 'art-tag c-note', text: ' \u00b7 ' + note }));
+      if (note) d.append(el('span', { class: 'art-tag c-note', text: note }));
       if (r.closeType === 'live') d.append(el('span', { class: 'art-tag is-mark', text: 'Live' }));
       if (n > 1 && r === lo) d.append(el('span', { class: 'art-tag is-mark', text: 'Low' }));
       if (n > 1 && r === hi) d.append(el('span', { class: 'art-tag is-mark', text: 'High' }));
