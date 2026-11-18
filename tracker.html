@@ -223,6 +223,9 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   table.is-log tr:last-child { border-bottom: 0; }
   table.is-log td { padding: 0; border: 0; text-align: right; min-width: 0; }
   table.is-log td.c-date { grid-area: date; text-align: left; font-weight: 600; }
+  /* On a phone the Live/Low/High tags wrap under the date instead of running into the price column. */
+  table.is-log td.c-date { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; white-space: normal; }
+  table.is-log td.c-date .art-tag.is-mark { margin-left: 0; white-space: nowrap; line-height: 1.5; }
   table.is-log td.c-range { display: block; grid-area: range; text-align: left; font-size: 0.8rem; color: var(--muted); white-space: normal; overflow-wrap: anywhere; }
   table.is-log td.c-mcx { grid-area: mcx; font-weight: 600; }
   table.is-log tr.is-closed td.c-date, table.is-log tr.is-closed td.c-mcx { font-weight: 400; }
