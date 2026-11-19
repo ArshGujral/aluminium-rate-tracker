@@ -1,11 +1,5 @@
 {
  "updatedAt": "2026-11-20",
- "config": {
-  "markupPct": 33,
-  "taxPct": 9,
-  "markup33": 34.53,
-  "markup38": 62.6
- },
  "rates": [
   {
    "date": "2026-08-18",
@@ -424,16 +418,6 @@
    "closeType": "last",
    "low": 308.9,
    "high": 322.75
-  }
- ],
- "quotes": [
-  {
-   "date": "2026-10-23",
-   "supplier": "",
-   "rate": 430,
-   "mcxAtQuote": 323.7,
-   "note": "32 SWG, rate you shared in chat",
-   "id": "q-2026-10-23-a"
   }
  ],
  "updatedTime": "00:25"

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://alu-quotes.arshsinghgujral.workers.dev; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Aluminium Rate Tracker</title>
 <!-- The Xing-Z website's icon (xing-z-website: public/favicon.svg), with PNG sizes for phones: iPhone and Android tabs,
@@ -312,11 +313,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 .is-over { color: var(--warn); font-weight: 500; }
 .is-under { color: var(--good); font-weight: 500; }
 .art-foot { color: var(--muted); font-size: 0.84rem; margin: 0; max-width: 75ch; }
-.art-connect { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.art-connect[hidden], #q-connected[hidden] { display: none; }
-.art-connect-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.art-connect-row input { flex: 1 1 220px; min-width: 0; }
-#q-connected { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
 @media (max-width: 660px) {
   body { font-size: 16px; }
   .art-page { padding-block: 18px 36px; gap: 22px; }
@@ -388,7 +385,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   <form class="xz-lock-box" id="lock-form" autocomplete="off">
     <span class="xz-lock-logo" role="img" aria-label="Xing-Z"></span>
     <label for="lock-pin">Enter the PIN to open the rate tracker</label>
-    <input id="lock-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" required>
+    <input id="lock-pin" type="password" inputmode="numeric" maxlength="20" autocomplete="off" required>
     <button type="submit">Open</button>
     <p class="xz-lock-msg" id="lock-msg" aria-live="polite"></p>
   </form>
@@ -396,30 +393,39 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 <script>
 (function () {
   var root = document.documentElement, form = document.getElementById('lock-form'), pin = document.getElementById('lock-pin'), msg = document.getElementById('lock-msg');
-  var KEY = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // SHA-256 of the PIN, so the PIN itself is not written in the page
-  var IDLE_MS = 180 * 1000, last = Date.now();
-  try { localStorage.removeItem('art-pin'); } catch (e) {} // an older version remembered the unlock
-  function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
-  var current = ''; // the PIN typed at unlock, kept in memory only so saves can send it to the quotes worker
+  // The PIN is checked by the quotes worker (worker/quotes-worker.js), which also hands over the private quotes and
+  // markup. Nothing in this page reveals the PIN, and the worker refuses a visitor after 10 wrong tries in an hour.
+  var CHECK_URL = 'https://alu-quotes.arshsinghgujral.workers.dev/';
+  var IDLE_MS = 180 * 1000, last = Date.now(), busy = false;
+  try { ['art-pin', 'art-gh-key', 'art-quotes', 'art-quotes-del'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {} // left by older versions
+  var current = ''; // the PIN typed at unlock, kept in memory only so saves can send it to the worker
   window.xzPin = function () { return current; };
   function lock() {
     if (!root.classList.contains('is-open')) return;
     current = ''; root.classList.remove('is-open'); pin.value = ''; msg.textContent = '';
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    document.dispatchEvent(new CustomEvent('xz-locked'));
     setTimeout(function () { pin.focus(); }, 50);
   }
+  function refuse(text) {
+    msg.textContent = text; form.classList.remove('is-wrong'); void form.offsetWidth; form.classList.add('is-wrong');
+    pin.value = ''; pin.focus();
+  }
   function check() {
-    if (!window.crypto || !crypto.subtle) { msg.textContent = 'This browser cannot check the PIN. Open the site over https.'; return; }
-    crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin.value)).then(function (h) {
-      if (hex(h) === KEY) { current = pin.value; last = Date.now(); root.classList.add('is-open'); pin.value = ''; pin.blur(); }
-      else {
-        msg.textContent = 'Wrong PIN. Try again.'; form.classList.remove('is-wrong'); void form.offsetWidth; form.classList.add('is-wrong');
-        pin.value = ''; pin.focus();
-      }
-    });
+    var typed = pin.value; if (!typed || busy) return;
+    busy = true; msg.textContent = 'Checking\u2026';
+    fetch(CHECK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'check', pin: typed }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        busy = false;
+        if (res.j.ok) {
+          current = typed; last = Date.now(); msg.textContent = ''; root.classList.add('is-open'); pin.value = ''; pin.blur();
+          document.dispatchEvent(new CustomEvent('xz-unlocked', { detail: res.j }));
+        } else refuse(res.status === 403 ? 'Wrong PIN. Try again.' : res.j.error || 'The PIN could not be checked. Try again.');
+      }, function () { busy = false; refuse('Could not reach the PIN check. Check the internet connection and try again.'); });
   }
   form.addEventListener('submit', function (e) { e.preventDefault(); check(); });
-  pin.addEventListener('input', function () { msg.textContent = ''; if (pin.value.length === 4) check(); });
+  pin.addEventListener('input', function () { if (!busy) msg.textContent = ''; });
   // Any use of the page counts as activity; after 3 minutes without any, the PIN screen comes back.
   ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(function (t) {
     window.addEventListener(t, function () { if (root.classList.contains('is-open')) last = Date.now(); }, { passive: true, capture: true });
@@ -533,16 +539,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   <section class="art-sec" id="quote-sec">
     <div class="art-sec-head"><h2>Supplier quotes</h2></div>
     <p class="art-hint">Log each wire rate a supplier quotes you. The tracker works out the markup over MCX in each quote and, when learning is on, uses the average of the last 5 quotes for a gauge as that gauge’s markup.</p>
-    <p class="art-hint" id="store-note" hidden>Quotes and markup are shared: what you add or change on your phone shows on your laptop too. Tax is set per device and starts at 18%.</p>
-    <div class="art-connect" id="q-connect" hidden>
-      <p class="art-hint"><b>Connect this device to add or delete quotes.</b> Paste a GitHub key that can save to the
-        aluminium-rate-tracker repository (fine-grained token, Contents: read and write). It stays in this browser only.</p>
-      <form class="art-connect-row" id="q-connect-form" autocomplete="off">
-        <input type="password" id="q-key" placeholder="github_pat_…" spellcheck="false" autocomplete="off" aria-label="GitHub key">
-        <button type="submit" class="is-primary">Connect</button>
-      </form>
-    </div>
-    <p class="art-hint" id="q-connected" hidden>This device is connected. <button type="button" class="is-small" id="q-disconnect">Disconnect</button></p>
+    <p class="art-hint" id="store-note" hidden>Quotes and markup are private and shared: only the PIN opens them, and what you add or change on your phone shows on your laptop too. Tax is set per device and starts at 18%.</p>
     <form class="art-form" id="quote-form" novalidate>
       <div class="art-field"><label for="q-date">Date</label><input type="date" id="q-date" required></div>
       <div class="art-field is-wide"><label for="q-supplier">Supplier</label><input type="text" id="q-supplier" maxlength="60" autocomplete="off"></div>
@@ -572,7 +569,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 <script>
 (function () {
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var S = { rates: [], quotes: [], cfg: { markupPct: 33, taxPct: 18, markup33: 34.53, markup38: 62.6, learn: true }, run: null, local: false, snap: null,
+  var S = { rates: [], quotes: [], cfg: { markupPct: 0, taxPct: 18, markup33: 0, markup38: 0, learn: true }, run: null, local: false, snap: null,
             range: '3M', gauge: '32', showAll: false, canWrite: true, ratesLoaded: false, db: null, armed: {} };
   function $(id) { return document.getElementById(id); }
   function parseD(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
@@ -858,36 +855,9 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function lsGet(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function normQ(x, id) { return { id: id, date: x.date, supplier: typeof x.supplier === 'string' ? x.supplier : '', rate: x.rate, mcxAtQuote: x.mcxAtQuote, gauge: x.gauge === '33' || x.gauge === '38' ? x.gauge : '32', note: typeof x.note === 'string' ? x.note : '', at: typeof x.createdAt === 'string' ? x.createdAt : '' }; }
-  // Quotes and the markup settings live in quotes.json in this repository, so every device shows the same. Reading needs
-  // no key; saving goes through the GitHub contents API with the owner's key, kept only in this browser.
-  // Tax is not shared: each device starts at 18% and keeps its own change.
-  var QURL = 'https://api.github.com/repos/ArshGujral/aluminium-rate-tracker/contents/quotes.json';
-  // The Cloudflare Worker (worker/quotes-worker.js) that saves with the PIN alone. Empty: devices save with their own key.
+  // Quotes and the markup settings are private: they live in the quotes worker's storage, not in the public repository,
+  // and arrive only with the right PIN (at unlock, and on each refresh while unlocked). Tax stays on each device.
   var WORKER_URL = 'https://alu-quotes.arshsinghgujral.workers.dev/';
-  function viaWorker(body) {
-    body.pin = window.xzPin ? window.xzPin() : '';
-    return fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) {
-        if (!r.ok || !j.ok) throw { status: r.status, msg: j.error || 'The quotes service did not answer (' + r.status + ').' };
-        setQuotes(j.quotes || []); setMarkup(j.markup); renderAll();
-      }); }, function () { throw { msg: 'Could not reach the quotes service. Check the connection and try again.' }; });
-  }
-  function failText(c) { return (c && c.msg) || keyFailed(c); }
-  function ghKey() { try { return localStorage.getItem('art-gh-key') || ''; } catch (e) { return ''; } }
-  function b64(str) { return btoa(unescape(encodeURIComponent(str))); }
-  function unb64(str) { return decodeURIComponent(escape(atob(String(str).replace(/\s/g, '')))); }
-  function ghRead() {
-    var h = { Accept: 'application/vnd.github+json' }, k = ghKey(); if (k) h.Authorization = 'Bearer ' + k;
-    return fetch(QURL + '?ref=main&t=' + Date.now(), { headers: h, cache: 'no-store' }).then(function (r) {
-      if (!r.ok) throw r.status; return r.json();
-    }).then(function (f) { var d = JSON.parse(unb64(f.content)); return { sha: f.sha, quotes: Array.isArray(d.quotes) ? d.quotes : [], markup: d.markup || null }; })
-      .catch(function (e) {
-        if (k) throw e;
-        // Without a key the API allows 60 reads an hour; past that, read the published copy instead.
-        return fetch('quotes.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
-          .then(function (d) { return { sha: null, quotes: Array.isArray(d.quotes) ? d.quotes : [], markup: d.markup || null }; });
-      });
-  }
   function setQuotes(list) {
     S.quotes = list.map(function (q) { return normQ(q, q.id); }).filter(function (q) { return isDate(q.date) && okNum(q.rate); });
   }
@@ -898,72 +868,28 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     ['markupPct', 'markup33', 'markup38'].forEach(function (k) { if (typeof m[k] === 'number' && m[k] >= 0 && m[k] <= 300) S.cfg[k] = m[k]; });
     if (typeof m.learn === 'boolean') S.cfg.learn = m.learn;
   }
-  // Read, change and save in one go. If another device saved in between, GitHub refuses the stale copy and we redo
-  // the change on the new one, so two devices adding at once both keep their quote.
-  // fn changes the quote list; markupFn, if given, changes the markup settings.
-  function ghChange(fn, message, tries, markupFn) {
-    tries = tries || 0;
-    return ghRead().then(function (cur) {
-      var list = fn ? fn(cur.quotes.slice()) : cur.quotes, markup = markupFn ? markupFn(Object.assign({}, cur.markup || {})) : cur.markup;
-      var doc = { quotes: list }; if (markup) doc.markup = markup;
-      return fetch(QURL, { method: 'PUT', headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + ghKey(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: message, branch: 'main', sha: cur.sha, content: b64(JSON.stringify(doc, null, 1) + '\n') }) })
-        .then(function (r) {
-          if ((r.status === 409 || r.status === 422) && tries < 3) return ghChange(fn, message, tries + 1, markupFn);
-          if (!r.ok) throw r.status;
-          setQuotes(list); setMarkup(markup); renderAll();
-        });
-    });
+  function viaWorker(body) {
+    body.pin = window.xzPin ? window.xzPin() : '';
+    return fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok || !j.ok) throw { status: r.status, msg: j.error || 'The quotes service did not answer (' + r.status + ').' };
+        setQuotes(j.quotes || []); setMarkup(j.markup); renderAll();
+      }); }, function () { throw { msg: 'Could not reach the quotes service. Check the connection and try again.' }; });
   }
-  // Once unlocked, read through the worker: it reads GitHub as the owner, so the 60-reads-an-hour limit GitHub puts
-  // on visitors without a key never applies. Before unlock, or if the worker fails, read GitHub directly.
-  function loadQuotes() {
-    var direct = function () { return ghRead().then(function (cur) { setQuotes(cur.quotes); setMarkup(cur.markup); renderAll(); return cur; }, function () {}); };
-    if (WORKER_URL && window.xzPin && window.xzPin()) return viaWorker({ op: 'check' }).catch(direct);
-    return direct();
-  }
-  // Quotes an older version kept on this device move into the shared list once the device is connected.
-  function moveLocalQuotes() {
-    var mine = lsGet('art-quotes', []); if (!ghKey() || !Array.isArray(mine) || !mine.length) return Promise.resolve();
-    return ghChange(function (list) {
-      var have = {}; list.forEach(function (q) { have[q.id] = true; });
-      mine.forEach(function (q) { if (q && !have[q.id]) list.push(q); }); return list;
-    }, 'Move supplier quotes from a device into the shared list').then(function () { try { localStorage.removeItem('art-quotes'); localStorage.removeItem('art-quotes-del'); } catch (e) {} });
-  }
-  function showConnect() {
-    if (WORKER_URL) { S.shared = true; $('q-connect').hidden = true; $('q-connected').hidden = true; $('quote-form').hidden = false; return; }
-    var on = !!ghKey(); S.shared = on;
-    $('q-connect').hidden = on; $('q-connected').hidden = !on; $('quote-form').hidden = !on;
-  }
-  function keyFailed(code) {
-    if (code !== 401 && code !== 403 && code !== 404) return null;
-    try { localStorage.removeItem('art-gh-key'); } catch (e) {}
-    showConnect(); renderQuotes();
-    return 'GitHub did not accept this device’s key. Connect again with a key that can save to the repository.';
-  }
+  function failText(c) { return c && c.msg; }
+  function loadQuotes() { return window.xzPin && window.xzPin() ? viaWorker({ op: 'check' }).catch(function () {}) : Promise.resolve(); }
+  function showConnect() { S.shared = true; $('quote-form').hidden = false; }
+  document.addEventListener('xz-unlocked', function (e) { setQuotes(e.detail.quotes || []); setMarkup(e.detail.markup); renderAll(); });
+  // Locked again: drop the private data from the page until the PIN is entered again.
+  document.addEventListener('xz-locked', function () { S.quotes = []; S.cfg = Object.assign({}, S.cfg, { markupPct: 0, markup33: 0, markup38: 0 }); renderAll(); });
   function addQuote(doc) {
     if (S.db) return S.db.collection('quotes').add(doc);
-    if (WORKER_URL) return viaWorker({ op: 'add', quote: doc });
-    doc.id = 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    return ghChange(function (list) { list.push(doc); return list; }, 'Add supplier quote: ' + doc.date + (doc.supplier ? ', ' + doc.supplier : ''));
+    return viaWorker({ op: 'add', quote: doc });
   }
   function delQuote(id) {
     if (S.db) return S.db.collection('quotes').doc(id).delete();
-    if (WORKER_URL) return viaWorker({ op: 'delete', id: id });
-    return ghChange(function (list) { return list.filter(function (q) { return q.id !== id; }); }, 'Delete supplier quote');
+    return viaWorker({ op: 'delete', id: id });
   }
-  $('q-connect-form').addEventListener('submit', function (e) {
-    e.preventDefault(); var k = $('q-key').value.trim(); if (!k) return;
-    try { localStorage.setItem('art-gh-key', k); } catch (x) { msg('q-msg', 'This browser would not keep the key.', true); return; }
-    $('q-key').value = ''; showConnect(); renderQuotes(); msg('q-msg', 'Checking the key…');
-    (lsGet('art-quotes', []).length ? moveLocalQuotes() : ghRead()).then(function () { return loadQuotes(); })
-      .then(function () { msg('q-msg', 'Connected. Quotes you add here appear on all your devices.'); },
-        function (c) { msg('q-msg', keyFailed(c) || 'Could not reach GitHub. Check the connection and try again.', true); });
-  });
-  $('q-disconnect').addEventListener('click', function () {
-    try { localStorage.removeItem('art-gh-key'); } catch (e) {}
-    showConnect(); renderQuotes(); msg('q-msg', 'This device is disconnected. Quotes stay visible; adding and deleting need the key again.');
-  });
 
   document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); renderLog(); }); });
   try { var sg = localStorage.getItem('gauge'); if (sg === '33' || sg === '38') S.gauge = sg; } catch (e) {}
@@ -995,22 +921,10 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       if (tx !== prevTax) lsSet('art-tax', tx);
       var mkChanged = mk !== prev.markupPct || ex !== prev.markup33 || m38 !== prev.markup38 || learn !== prev.learn;
       if (!mkChanged) { msg('cfg-msg', 'Tax saved on this device. Other devices keep their own tax.'); return; }
-      if (WORKER_URL) {
-        msg('cfg-msg', 'Saving markup for all your devices\u2026');
-        viaWorker({ op: 'markup', markup: { markupPct: mk, markup33: ex, markup38: m38, learn: learn } })
-          .then(function () { msg('cfg-msg', 'Markup saved for all your devices.'); },
-            function (c) { S.cfg = Object.assign({}, S.cfg, { markupPct: prev.markupPct, markup33: prev.markup33, markup38: prev.markup38, learn: prev.learn }); renderAll(); msg('cfg-msg', failText(c) || 'Could not save the markup. Try again.', true); });
-        return;
-      }
-      if (!ghKey()) {
-        S.cfg = Object.assign({}, S.cfg, { markupPct: prev.markupPct, markup33: prev.markup33, markup38: prev.markup38, learn: prev.learn }); renderAll();
-        msg('cfg-msg', 'Markup is shared by all your devices. Connect this device under Supplier quotes, at the bottom, to change it.', true); return;
-      }
       msg('cfg-msg', 'Saving markup for all your devices\u2026');
-      ghChange(null, 'Change markup settings', 0, function (m) { m.markupPct = mk; m.markup33 = ex; m.markup38 = m38; m.learn = learn; return m; })
+      viaWorker({ op: 'markup', markup: { markupPct: mk, markup33: ex, markup38: m38, learn: learn } })
         .then(function () { msg('cfg-msg', 'Markup saved for all your devices.'); },
-          function (c) { S.cfg = Object.assign({}, S.cfg, { markupPct: prev.markupPct, markup33: prev.markup33, markup38: prev.markup38, learn: prev.learn }); renderAll();
-            msg('cfg-msg', keyFailed(c) || 'Could not save the markup. Try again.', true); });
+          function (c) { S.cfg = Object.assign({}, S.cfg, { markupPct: prev.markupPct, markup33: prev.markup33, markup38: prev.markup38, learn: prev.learn }); renderAll(); msg('cfg-msg', failText(c) || 'Could not save the markup. Try again.', true); });
       return;
     }
     if (!S.db) { msg('cfg-msg', 'Changed for this visit only. Saving is not available in this view.'); return; }
@@ -1063,10 +977,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         window.addEventListener('pageshow', function (e) { if (e.persisted) refresh(); });
         S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
         S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-        S.quotes = []; showConnect(); loadQuotes().then(function () { return moveLocalQuotes(); }).catch(function () {});
-        var c = d.config || {}, tax = lsGet('art-tax', null);
-        ['markupPct', 'markup33', 'markup38'].forEach(function (k) { if (typeof c[k] === 'number') S.cfg[k] = c[k]; });
-        S.cfg.learn = c.learn !== false;
+        S.quotes = []; showConnect();
+        var tax = lsGet('art-tax', null);
         S.cfg.taxPct = typeof tax === 'number' && tax >= 0 && tax <= 100 ? tax : 18;
         try { localStorage.removeItem('art-cfg'); } catch (e) {} // an older version kept markup and tax together on each device
         $('store-note').hidden = false; S.ratesLoaded = true; renderAll();
@@ -1088,7 +1000,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     }, function () {});
     db.doc('config/settings').onSnapshot(function (d) {
       var x = d.exists ? d.data() : null;
-      if (x && typeof x.markupPct === 'number' && typeof x.taxPct === 'number') { S.cfg = { markupPct: x.markupPct, taxPct: x.taxPct, markup33: typeof x.markup33 === 'number' ? x.markup33 : 34.53, markup38: typeof x.markup38 === 'number' ? x.markup38 : 62.6, learn: x.learn !== false }; renderAll(); }
+      if (x && typeof x.markupPct === 'number' && typeof x.taxPct === 'number') { S.cfg = { markupPct: x.markupPct, taxPct: x.taxPct, markup33: typeof x.markup33 === 'number' ? x.markup33 : 0, markup38: typeof x.markup38 === 'number' ? x.markup38 : 0, learn: x.learn !== false }; renderAll(); }
     }, function () {});
     db.doc('status/lastRun').onSnapshot(function (d) { S.run = d.exists ? d.data() : null; renderStatus(); }, function () {});
   }

@@ -12,18 +12,15 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
 ## Where things live
 
 - `index.html`: the website, served by GitHub Pages at https://arshgujral.github.io/aluminium-rate-tracker/.
-  One self-contained file (styles and script inline). It reads `data.json` and `quotes.json` and refreshes both every
-  3 minutes. Colours and glass follow the Xing-Z website; the fonts stay Inter and Space Grotesk.
-- `data.json`: the rates, plus starting quotes and settings. **Written by the update program.** Edit it by hand only
-  to correct a wrong rate, and say so in the commit.
-- `quotes.json`: the supplier quotes and the markup settings (three markups and "learn"), shared by every device. Tax
-  is not shared: each device starts at 18% and keeps its own change. The website reads it through the GitHub contents API and
-  saves to it with the owner's key (a fine-grained token, Contents: read and write), which each device keeps in its
-  own browser. Two devices saving at once is handled by retrying on GitHub's refusal of a stale copy.
-- `worker/quotes-worker.js`: a Cloudflare Worker that saves quotes and markup to `quotes.json` when the request carries
-  the right PIN, so devices need no key. It holds the GitHub key as the secret `GITHUB_TOKEN`, checks `PIN_HASH`
-  (the PIN's SHA-256), and refuses a visitor for an hour after 10 wrong PINs (KV binding `ATTEMPTS`). The website
-  uses it when `WORKER_URL` in `index.html` is set; otherwise each device connects with its own key.
+  One self-contained file (styles and script inline). It reads `data.json`, and the quotes and markup from the worker after
+  unlock, and refreshes both every 3 minutes. A Content-Security-Policy limits it to its own scripts, Google Fonts and the worker. Colours and glass follow the Xing-Z website; the fonts stay Inter and Space Grotesk.
+- `data.json`: the rates only (public market data). **Written by the update program.** Edit it by hand only to
+  correct a wrong rate, and say so in the commit. Never put quotes or markup in it: the repository is public.
+- `worker/quotes-worker.js`: the Cloudflare Worker at https://alu-quotes.arshsinghgujral.workers.dev/. It checks the
+  PIN for the website (Cloudflare secret `PIN`; `PIN_HASH` only until `PIN` is set) and keeps the supplier quotes and
+  markup private in its KV namespace (binding `ATTEMPTS`, key `store:doc`; the same namespace counts wrong PINs and
+  refuses a visitor for an hour after 10). Paste changes to this file into the Cloudflare editor and deploy there.
+  Tax is not shared: each device starts at 18% and keeps its own change.
 - `scripts/update_rates.py`: the update program (Python standard library only). Reads Dhan, Groww, Moneycontrol
   and MCX Live for the price, plus 5paisa for the previous close, and writes a rate only when two sources agree.
 - `.github/workflows/update-rates.yml`: runs the program and commits `data.json`. Started every 30 minutes
@@ -45,11 +42,11 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
   nothing and let the next run try again.
 - **A push to `main` publishes the live site.** Push only changes the owner asked for. The workflow also commits
   `data.json` to `main` many times a day, so fetch and rebase before you push, and never force-push `main`.
-- **No secrets in the repo.** The GitHub token that lets cron-job.org start the workflow lives only in
-  cron-job.org. The key that saves quotes lives only in the owner's browsers. The PIN screen stores only the PIN's SHA-256; never write the PIN itself in code, comments,
-  commits or docs.
-- The PIN screen shows on every load and after 3 minutes without activity. It keeps casual visitors out only:
-  the page and `data.json` are public files.
+- **No secrets or private business data in the repo** (it is public). The GitHub token that lets cron-job.org start
+  the workflow lives only in cron-job.org; the PIN lives only in the worker's Cloudflare secrets. Never write the PIN,
+  its hash, supplier quotes or markups into code, comments, commits or docs.
+- The PIN screen shows on every load and after 3 minutes without activity; the worker checks the PIN. Locking again
+  clears the quotes and markup from the page. The rates in `data.json` stay public, which is fine: they are market data.
 - Support both dark and light themes, and phone width with no horizontal scroll. Check both when changing UI.
 - Match the surrounding code: short comments that say why, the same naming and idiom, no build step, no
   framework, no new dependencies in the update program.
