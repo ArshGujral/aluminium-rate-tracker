@@ -29,6 +29,7 @@
   --accent: #1a7a6b;
   --accent-hi: #145f53;
   --accent-soft: rgba(26, 122, 107, 0.12);
+  --logo: #229784;
   --good: #1f7a4d;
   --good-soft: rgba(31, 122, 77, 0.1);
   --warn: #a8540a;
@@ -44,14 +45,14 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --fg-rgb: 255, 255, 255; --bg: #050a0a; --surface: #0b1212; --accent: #229784; --accent-hi: #a0d5cd; --accent-soft: rgba(34, 151, 132, 0.16);
+    --fg-rgb: 255, 255, 255; --logo: #ffffff; --bg: #050a0a; --surface: #0b1212; --accent: #229784; --accent-hi: #a0d5cd; --accent-soft: rgba(34, 151, 132, 0.16);
     --good: #5fc291; --good-soft: rgba(95, 194, 145, 0.14); --warn: #e3a056; --warn-soft: rgba(227, 160, 86, 0.14);
     --glass-fill: rgba(255, 255, 255, 0.01); --glass-edge: 255, 255, 255; --glass-edge-strength: 1; --bar-solid: rgba(6, 14, 13, 0.55); --bar-shadow: rgba(0, 0, 0, 0.35);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --fg-rgb: 255, 255, 255; --bg: #050a0a; --surface: #0b1212; --accent: #229784; --accent-hi: #a0d5cd; --accent-soft: rgba(34, 151, 132, 0.16);
+  --fg-rgb: 255, 255, 255; --logo: #ffffff; --bg: #050a0a; --surface: #0b1212; --accent: #229784; --accent-hi: #a0d5cd; --accent-soft: rgba(34, 151, 132, 0.16);
   --good: #5fc291; --good-soft: rgba(95, 194, 145, 0.14); --warn: #e3a056; --warn-soft: rgba(227, 160, 86, 0.14);
   --glass-fill: rgba(255, 255, 255, 0.01); --glass-edge: 255, 255, 255; --glass-edge-strength: 1; --bar-solid: rgba(6, 14, 13, 0.55); --bar-shadow: rgba(0, 0, 0, 0.35);
   color-scheme: dark;
@@ -133,7 +134,7 @@ body {
   .xz-spark { animation: xz-breathe 2.4s ease-in-out infinite alternate; }
 }
 .art-logo {
-  display: block; width: 118px; aspect-ratio: 873 / 357; background: var(--ink); flex: none;
+  display: block; width: 118px; aspect-ratio: 873 / 357; background: var(--logo); flex: none;
   -webkit-mask: url(xingz-logo-white.png) left center / contain no-repeat; mask: url(xingz-logo-white.png) left center / contain no-repeat;
 }
 .art-theme { width: 42px; height: 42px; min-height: 0; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; flex: none; }
