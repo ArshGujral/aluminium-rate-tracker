@@ -10,7 +10,10 @@
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap"></noscript>
 <style>
 /* Layout: one working column. The rate formula reads left to right as an equation strip
    (MCX close, plus markup, plus tax), then the price chart, supplier quotes, and the daily log. */
@@ -168,15 +171,14 @@ button.is-primary { background: var(--accent); border-color: var(--accent); colo
 button.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 button.is-small { padding: 3px 9px; font-size: 0.82rem; }
 button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
-/* Glass buttons, in the spirit of Apple's Liquid Glass: a translucent capsule with a frosted blur, a bright top rim
-   and a soft drop shadow. Tokens are per theme; the selected and primary buttons are tinted with the accent. */
+/* Glass buttons, in the spirit of Apple's Liquid Glass: a translucent capsule with a bright top rim and a soft drop shadow.
+   No per-button backdrop blur: the buttons sit on solid backgrounds, so it showed nothing and slowed phones. Tokens are per theme; the selected and primary buttons are tinted with the accent. */
 :root { --g-top: rgba(255, 255, 255, .86); --g-bot: rgba(255, 255, 255, .52); --g-rim: rgba(23, 33, 43, .13); --g-hi: rgba(255, 255, 255, .95); --g-lo: rgba(23, 33, 43, .05); --g-sh: rgba(16, 24, 40, .16); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --g-top: rgba(255, 255, 255, .15); --g-bot: rgba(255, 255, 255, .05); --g-rim: rgba(255, 255, 255, .14); --g-hi: rgba(255, 255, 255, .26); --g-lo: rgba(0, 0, 0, .25); --g-sh: rgba(0, 0, 0, .55); } }
 :root[data-theme="dark"] { --g-top: rgba(255, 255, 255, .15); --g-bot: rgba(255, 255, 255, .05); --g-rim: rgba(255, 255, 255, .14); --g-hi: rgba(255, 255, 255, .26); --g-lo: rgba(0, 0, 0, .25); --g-sh: rgba(0, 0, 0, .55); }
 button {
   border-radius: 999px; border: 1px solid var(--g-rim); color: var(--ink);
   background: linear-gradient(180deg, var(--g-top), var(--g-bot));
-  -webkit-backdrop-filter: blur(14px) saturate(170%); backdrop-filter: blur(14px) saturate(170%);
   box-shadow: inset 0 1px 0 var(--g-hi), inset 0 -1px 1px var(--g-lo), 0 1px 2px var(--g-sh), 0 6px 14px -9px var(--g-sh);
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
 }
@@ -254,7 +256,7 @@ table.is-log td.c-date .art-tag.is-mark { display: inline-block; white-space: no
   background: var(--bg); border-bottom: 1px solid transparent; transition: border-color .15s, box-shadow .15s, background .15s;
 }
 .art-gauge.is-stuck::before { border-bottom-color: var(--line); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .35);
-  background: color-mix(in srgb, var(--bg) 68%, transparent); -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%); }
+  background: color-mix(in srgb, var(--bg) 68%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .art-gauge-mark { height: 1px; margin-bottom: -29px; } /* cancels the page gap it would otherwise add */
 .art-chart {
   position: relative; background: var(--surface); border: 1px solid var(--line);
