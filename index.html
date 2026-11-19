@@ -66,8 +66,8 @@ body {
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #xz-loader { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .1); } }
 :root[data-theme="light"] #xz-loader { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .1); }
 #xz-loader.is-done { opacity: 0; visibility: hidden; }
-/* PIN screen shown before the tracker, in the loader's colours. It only keeps casual visitors out:
-   the page and its data.json are public files on GitHub Pages. Once the PIN is right, this device remembers it. */
+/* PIN screen shown before the tracker, in the loader's colours: on every load and after 3 minutes without use.
+   It only keeps casual visitors out: the page and its data.json are public files on GitHub Pages. */
 #xz-lock {
   --xbg: #050a0a; --xbase: rgba(255, 255, 255, .14); --xlit: #a0d5cd; --xhot: #fff; --xline: rgba(255, 255, 255, .1); --xink: #e8f2f0; --xmuted: rgba(232, 242, 240, .62); --xwarn: #e3a056;
   position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: var(--xbg);
@@ -82,11 +82,14 @@ body {
 .xz-lock-box label { font-size: 0.95rem; color: var(--xmuted); }
 .xz-lock-box input {
   width: 100%; box-sizing: border-box; text-align: center; font: 600 1.6rem/1 var(--font-display); letter-spacing: 0.45em; padding: 12px 0 12px 0.45em;
-  color: var(--xink); background: transparent; border: 1px solid var(--xline); border-radius: 10px; outline: none;
+  color: var(--xink); background: linear-gradient(180deg, color-mix(in srgb, var(--xink) 7%, transparent), color-mix(in srgb, var(--xink) 2%, transparent)); border: 1px solid var(--xline); border-radius: 999px; outline: none;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 30%, transparent), inset 0 2px 6px -3px rgba(0, 0, 0, .25);
 }
 #xz-lock input:focus, #xz-lock input:focus-visible { outline: none; }
 .xz-lock-box input:focus { border-color: var(--xlit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--xlit) 25%, transparent); }
-.xz-lock-box button { width: 100%; min-height: 46px; border: 0; border-radius: 10px; background: var(--xlit); color: var(--xbg); font: 600 1rem var(--font-body); cursor: pointer; }
+.xz-lock-box button { width: 100%; min-height: 46px; border: 1px solid color-mix(in srgb, var(--xlit) 70%, black); border-radius: 999px; color: var(--xbg); font: 600 1rem var(--font-body); cursor: pointer;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--xlit) 75%, white), var(--xlit));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -1px 1px rgba(0, 0, 0, .15), 0 10px 22px -12px var(--xlit); }
 .xz-lock-msg { min-height: 1.3em; margin: 0; font-size: 0.88rem; color: var(--xwarn); }
 .xz-lock-box.is-wrong input { border-color: var(--xwarn); animation: xz-shake .3s; }
 @keyframes xz-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
@@ -165,6 +168,30 @@ button.is-primary { background: var(--accent); border-color: var(--accent); colo
 button.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 button.is-small { padding: 3px 9px; font-size: 0.82rem; }
 button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
+/* Glass buttons, in the spirit of Apple's Liquid Glass: a translucent capsule with a frosted blur, a bright top rim
+   and a soft drop shadow. Tokens are per theme; the selected and primary buttons are tinted with the accent. */
+:root { --g-top: rgba(255, 255, 255, .86); --g-bot: rgba(255, 255, 255, .52); --g-rim: rgba(23, 33, 43, .13); --g-hi: rgba(255, 255, 255, .95); --g-lo: rgba(23, 33, 43, .05); --g-sh: rgba(16, 24, 40, .16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --g-top: rgba(255, 255, 255, .15); --g-bot: rgba(255, 255, 255, .05); --g-rim: rgba(255, 255, 255, .14); --g-hi: rgba(255, 255, 255, .26); --g-lo: rgba(0, 0, 0, .25); --g-sh: rgba(0, 0, 0, .55); } }
+:root[data-theme="dark"] { --g-top: rgba(255, 255, 255, .15); --g-bot: rgba(255, 255, 255, .05); --g-rim: rgba(255, 255, 255, .14); --g-hi: rgba(255, 255, 255, .26); --g-lo: rgba(0, 0, 0, .25); --g-sh: rgba(0, 0, 0, .55); }
+button {
+  border-radius: 999px; border: 1px solid var(--g-rim); color: var(--ink);
+  background: linear-gradient(180deg, var(--g-top), var(--g-bot));
+  -webkit-backdrop-filter: blur(14px) saturate(170%); backdrop-filter: blur(14px) saturate(170%);
+  box-shadow: inset 0 1px 0 var(--g-hi), inset 0 -1px 1px var(--g-lo), 0 1px 2px var(--g-sh), 0 6px 14px -9px var(--g-sh);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 45%, var(--g-rim)); box-shadow: inset 0 1px 0 var(--g-hi), inset 0 -1px 1px var(--g-lo), 0 2px 4px var(--g-sh), 0 10px 20px -10px var(--g-sh); }
+button:active:not(:disabled) { transform: scale(.97); }
+button.is-on {
+  color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, var(--g-top)), color-mix(in srgb, var(--accent) 12%, var(--g-bot)));
+}
+button.is-primary {
+  color: var(--surface); border-color: color-mix(in srgb, var(--accent) 70%, black);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, white), var(--accent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 1px rgba(0, 0, 0, .15), 0 1px 2px var(--g-sh), 0 8px 18px -10px var(--accent);
+}
+@media (prefers-reduced-motion: reduce) { button { transition: none; } button:active:not(:disabled) { transform: none; } }
 .art-signal {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 14px 18px; display: flex; flex-direction: column; gap: 8px;
@@ -224,9 +251,10 @@ table.is-log td.c-date .art-tag.is-mark { display: inline-block; white-space: no
 .art-gauge { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding-block: 10px; margin-top: -10px; margin-bottom: -24px; }
 .art-gauge::before {
   content: ""; position: absolute; z-index: -1; inset: 0 auto 0 50%; width: 100vw; transform: translateX(-50%);
-  background: var(--bg); border-bottom: 1px solid transparent; transition: border-color .15s, box-shadow .15s;
+  background: var(--bg); border-bottom: 1px solid transparent; transition: border-color .15s, box-shadow .15s, background .15s;
 }
-.art-gauge.is-stuck::before { border-bottom-color: var(--line); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .35); }
+.art-gauge.is-stuck::before { border-bottom-color: var(--line); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .35);
+  background: color-mix(in srgb, var(--bg) 68%, transparent); -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%); }
 .art-gauge-mark { height: 1px; margin-bottom: -29px; } /* cancels the page gap it would otherwise add */
 .art-chart {
   position: relative; background: var(--surface); border: 1px solid var(--line);
@@ -320,7 +348,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 </head>
 <body>
 <!--body-->
-<script>try { if (localStorage.getItem('art-pin') === '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed') document.documentElement.classList.add('is-open'); } catch (e) {}</script>
 <script>try { var xzT = localStorage.getItem('theme'); if (xzT === 'light' || xzT === 'dark') document.documentElement.setAttribute('data-theme', xzT); } catch (e) {}</script>
 <div id="xz-loader" role="status" aria-label="Loading Xing-Z">
   <div class="xz-stack">
@@ -342,15 +369,20 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 (function () {
   var root = document.documentElement, form = document.getElementById('lock-form'), pin = document.getElementById('lock-pin'), msg = document.getElementById('lock-msg');
   var KEY = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // SHA-256 of the PIN, so the PIN itself is not written in the page
-  if (root.classList.contains('is-open')) return;
+  var IDLE_MS = 180 * 1000, last = Date.now();
+  try { localStorage.removeItem('art-pin'); } catch (e) {} // an older version remembered the unlock
   function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+  function lock() {
+    if (!root.classList.contains('is-open')) return;
+    root.classList.remove('is-open'); pin.value = ''; msg.textContent = '';
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    setTimeout(function () { pin.focus(); }, 50);
+  }
   function check() {
     if (!window.crypto || !crypto.subtle) { msg.textContent = 'This browser cannot check the PIN. Open the site over https.'; return; }
     crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin.value)).then(function (h) {
-      if (hex(h) === KEY) {
-        try { localStorage.setItem('art-pin', KEY); } catch (e) {}
-        root.classList.add('is-open'); pin.blur();
-      } else {
+      if (hex(h) === KEY) { last = Date.now(); root.classList.add('is-open'); pin.value = ''; pin.blur(); }
+      else {
         msg.textContent = 'Wrong PIN. Try again.'; form.classList.remove('is-wrong'); void form.offsetWidth; form.classList.add('is-wrong');
         pin.value = ''; pin.focus();
       }
@@ -358,6 +390,14 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   }
   form.addEventListener('submit', function (e) { e.preventDefault(); check(); });
   pin.addEventListener('input', function () { msg.textContent = ''; if (pin.value.length === 4) check(); });
+  // Any use of the page counts as activity; after 3 minutes without any, the PIN screen comes back.
+  ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(function (t) {
+    window.addEventListener(t, function () { if (root.classList.contains('is-open')) last = Date.now(); }, { passive: true, capture: true });
+  });
+  function idleCheck() { if (root.classList.contains('is-open') && Date.now() - last >= IDLE_MS) lock(); }
+  setInterval(idleCheck, 5000);
+  document.addEventListener('visibilitychange', idleCheck); // timers sleep in background tabs, so check on return
+  window.addEventListener('pageshow', function (e) { if (e.persisted) lock(); }); // coming back via the back button counts as a reload
   setTimeout(function () { pin.focus(); }, 50);
 })();
 </script>
