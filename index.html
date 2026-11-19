@@ -66,6 +66,31 @@ body {
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #xz-loader { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .1); } }
 :root[data-theme="light"] #xz-loader { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .1); }
 #xz-loader.is-done { opacity: 0; visibility: hidden; }
+/* PIN screen shown before the tracker, in the loader's colours. It only keeps casual visitors out:
+   the page and its data.json are public files on GitHub Pages. Once the PIN is right, this device remembers it. */
+#xz-lock {
+  --xbg: #050a0a; --xbase: rgba(255, 255, 255, .14); --xlit: #a0d5cd; --xhot: #fff; --xline: rgba(255, 255, 255, .1); --xink: #e8f2f0; --xmuted: rgba(232, 242, 240, .62); --xwarn: #e3a056;
+  position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: var(--xbg);
+  transition: opacity .35s ease, visibility .35s;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #xz-lock { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .14); --xink: #10211e; --xmuted: rgba(16, 33, 30, .6); --xwarn: #a8540a; } }
+:root[data-theme="light"] #xz-lock { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .14); --xink: #10211e; --xmuted: rgba(16, 33, 30, .6); --xwarn: #a8540a; }
+:root.is-open #xz-lock { opacity: 0; visibility: hidden; pointer-events: none; }
+:root:not(.is-open) body { overflow: hidden; }
+.xz-lock-box { width: min(100%, 300px); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; font-family: var(--font-body); color: var(--xink); }
+.xz-lock-logo { width: 150px; aspect-ratio: 873 / 357; background: var(--xlit); -webkit-mask: url(xingz-logo-white.png) center / contain no-repeat; mask: url(xingz-logo-white.png) center / contain no-repeat; margin-bottom: 6px; }
+.xz-lock-box label { font-size: 0.95rem; color: var(--xmuted); }
+.xz-lock-box input {
+  width: 100%; box-sizing: border-box; text-align: center; font: 600 1.6rem/1 var(--font-display); letter-spacing: 0.45em; padding: 12px 0 12px 0.45em;
+  color: var(--xink); background: transparent; border: 1px solid var(--xline); border-radius: 10px; outline: none;
+}
+#xz-lock input:focus, #xz-lock input:focus-visible { outline: none; }
+.xz-lock-box input:focus { border-color: var(--xlit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--xlit) 25%, transparent); }
+.xz-lock-box button { width: 100%; min-height: 46px; border: 0; border-radius: 10px; background: var(--xlit); color: var(--xbg); font: 600 1rem var(--font-body); cursor: pointer; }
+.xz-lock-msg { min-height: 1.3em; margin: 0; font-size: 0.88rem; color: var(--xwarn); }
+.xz-lock-box.is-wrong input { border-color: var(--xwarn); animation: xz-shake .3s; }
+@keyframes xz-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { .xz-lock-box.is-wrong input { animation: none; } #xz-lock { transition: none; } }
 #xz-loader.is-done .xz-stack { transform: scale(1.04); }
 .xz-stack { display: grid; justify-items: center; gap: 28px; transition: transform .45s ease; }
 .xz-mark {
@@ -295,6 +320,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 </head>
 <body>
 <!--body-->
+<script>try { if (localStorage.getItem('art-pin') === '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed') document.documentElement.classList.add('is-open'); } catch (e) {}</script>
 <script>try { var xzT = localStorage.getItem('theme'); if (xzT === 'light' || xzT === 'dark') document.documentElement.setAttribute('data-theme', xzT); } catch (e) {}</script>
 <div id="xz-loader" role="status" aria-label="Loading Xing-Z">
   <div class="xz-stack">
@@ -302,6 +328,39 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <div class="xz-line"></div>
   </div>
 </div>
+
+<div id="xz-lock">
+  <form class="xz-lock-box" id="lock-form" autocomplete="off">
+    <span class="xz-lock-logo" role="img" aria-label="Xing-Z"></span>
+    <label for="lock-pin">Enter the PIN to open the rate tracker</label>
+    <input id="lock-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" required>
+    <button type="submit">Open</button>
+    <p class="xz-lock-msg" id="lock-msg" aria-live="polite"></p>
+  </form>
+</div>
+<script>
+(function () {
+  var root = document.documentElement, form = document.getElementById('lock-form'), pin = document.getElementById('lock-pin'), msg = document.getElementById('lock-msg');
+  var KEY = '1cfafff6d51a03662b85b93dc3417f51687034ba9a46682f5328257eff7133ed'; // SHA-256 of the PIN, so the PIN itself is not written in the page
+  if (root.classList.contains('is-open')) return;
+  function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+  function check() {
+    if (!window.crypto || !crypto.subtle) { msg.textContent = 'This browser cannot check the PIN. Open the site over https.'; return; }
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin.value)).then(function (h) {
+      if (hex(h) === KEY) {
+        try { localStorage.setItem('art-pin', KEY); } catch (e) {}
+        root.classList.add('is-open'); pin.blur();
+      } else {
+        msg.textContent = 'Wrong PIN. Try again.'; form.classList.remove('is-wrong'); void form.offsetWidth; form.classList.add('is-wrong');
+        pin.value = ''; pin.focus();
+      }
+    });
+  }
+  form.addEventListener('submit', function (e) { e.preventDefault(); check(); });
+  pin.addEventListener('input', function () { msg.textContent = ''; if (pin.value.length === 4) check(); });
+  setTimeout(function () { pin.focus(); }, 50);
+})();
+</script>
 
 <main class="art-page">
   <header class="art-head">
