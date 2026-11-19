@@ -170,6 +170,11 @@ body {
 .art-big small { font-size: 0.95rem; font-weight: 500; color: var(--muted); font-family: var(--font-body); }
 .art-term.is-final .art-big { color: var(--accent); }
 .art-meta { color: var(--muted); font-size: 0.87rem; }
+/* Market hours under the status line: open or closed now, and the regular session for this time of year. */
+.art-market { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 4px 0 0; }
+.art-market-state { display: inline-flex; align-items: center; gap: 7px; padding-left: 3px; font-size: 0.87rem; font-weight: 600; color: var(--ink); }
+.art-market-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.art-market-state.is-open::before { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 .art-pct { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .art-pct input { width: 74px; }
 input, button, select { font: inherit; color: inherit; }
@@ -431,6 +436,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <h1>Aluminium Rate Tracker</h1>
     <p class="art-sub">Aluminium winding wire, up to 32 SWG, 33 SWG and 38 SWG, priced from the MCX aluminium close.</p>
     <p class="art-status" id="status">Loading saved rates…</p>
+    <p class="art-market" id="market"><span class="art-market-state" id="mkt-state"></span><span class="art-meta" id="mkt-hours"></span></p>
   </header>
 
   <p class="art-note" id="stale" hidden></p>
@@ -654,6 +660,28 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     $('m-avg-t').textContent = 'Average ' + num(avg);
     $('sig-meter').hidden = false;
   }
+
+  // MCX trades Monday to Friday from 9:00 AM. It closes at 11:55 PM while US daylight saving is off (early November to
+  // mid-March) and at 11:30 PM while it is on; MCX moves on the Monday after the US change. Exchange holidays are not
+  // known to the page, so the state says "trading hours" rather than claiming a holiday is open.
+  function istNow() { var d = new Date(Date.now() + 330 * 60000); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), wd: d.getUTCDay(), min: d.getUTCHours() * 60 + d.getUTCMinutes() }; }
+  function nthSunday(y, m, n) { var first = new Date(Date.UTC(y, m, 1)).getUTCDay(); return 1 + (7 - first) % 7 + 7 * (n - 1); }
+  function closeMin(t) {
+    var day = Date.UTC(t.y, t.m, t.d), summerFrom = Date.UTC(t.y, 2, nthSunday(t.y, 2, 2) + 1), summerTo = Date.UTC(t.y, 10, nthSunday(t.y, 10, 1) + 1);
+    return day >= summerFrom && day < summerTo ? 23 * 60 + 30 : 23 * 60 + 55;
+  }
+  function hhmm(min) { var h = Math.floor(min / 60), m = min % 60; return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM'); }
+  function renderMarket() {
+    var t = istNow(), close = closeMin(t), open = 9 * 60, wk = t.wd >= 1 && t.wd <= 5, isOpen = wk && t.min >= open && t.min < close;
+    var st = $('mkt-state'), next;
+    if (isOpen) next = 'closes ' + hhmm(close);
+    else if (wk && t.min < open) next = 'opens today ' + hhmm(open);
+    else next = 'opens ' + (t.wd === 5 || t.wd === 6 ? 'Monday' : t.wd === 0 ? 'Monday' : 'tomorrow') + ' ' + hhmm(open);
+    st.textContent = (isOpen ? 'MCX open (trading hours) · ' : 'MCX closed · ') + next;
+    st.classList.toggle('is-open', isOpen);
+    $('mkt-hours').textContent = 'Mon–Fri, 9:00 AM – ' + hhmm(close) + ' IST' + (close === 23 * 60 + 55 ? ' (11:30 PM from mid-March to early November)' : ' (11:55 PM from early November to mid-March)') + '; closed on exchange holidays.';
+  }
+  renderMarket(); setInterval(renderMarket, 30000);
 
   function renderStatus() {
     var t = $('status'), r = S.run;
