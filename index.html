@@ -915,7 +915,13 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         });
     });
   }
-  function loadQuotes() { return ghRead().then(function (cur) { setQuotes(cur.quotes); setMarkup(cur.markup); renderAll(); return cur; }, function () {}); }
+  // Once unlocked, read through the worker: it reads GitHub as the owner, so the 60-reads-an-hour limit GitHub puts
+  // on visitors without a key never applies. Before unlock, or if the worker fails, read GitHub directly.
+  function loadQuotes() {
+    var direct = function () { return ghRead().then(function (cur) { setQuotes(cur.quotes); setMarkup(cur.markup); renderAll(); return cur; }, function () {}); };
+    if (WORKER_URL && window.xzPin && window.xzPin()) return viaWorker({ op: 'check' }).catch(direct);
+    return direct();
+  }
   // Quotes an older version kept on this device move into the shared list once the device is connected.
   function moveLocalQuotes() {
     var mine = lsGet('art-quotes', []); if (!ghKey() || !Array.isArray(mine) || !mine.length) return Promise.resolve();
@@ -961,7 +967,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); renderLog(); }); });
   try { var sg = localStorage.getItem('gauge'); if (sg === '33' || sg === '38') S.gauge = sg; } catch (e) {}
-  document.querySelectorAll('[data-gauge]').forEach(function (b) { b.addEventListener('click', function () { S.gauge = b.getAttribute('data-gauge'); try { localStorage.setItem('gauge', S.gauge); } catch (e) {} renderAll(); }); });
+  $('q-gauge').value = S.gauge;
+  document.querySelectorAll('[data-gauge]').forEach(function (b) { b.addEventListener('click', function () { S.gauge = b.getAttribute('data-gauge'); try { localStorage.setItem('gauge', S.gauge); } catch (e) {} if (!$('q-rate').value) $('q-gauge').value = S.gauge; renderAll(); }); });
   var root = document.documentElement;
   function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }
   var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7 7 17M17 7l1.7-1.7"/></svg>';
