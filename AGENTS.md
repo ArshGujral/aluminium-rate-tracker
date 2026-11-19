@@ -16,7 +16,8 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
   3 minutes. Colours and glass follow the Xing-Z website; the fonts stay Inter and Space Grotesk.
 - `data.json`: the rates, plus starting quotes and settings. **Written by the update program.** Edit it by hand only
   to correct a wrong rate, and say so in the commit.
-- `quotes.json`: the supplier quotes, shared by every device. The website reads it through the GitHub contents API and
+- `quotes.json`: the supplier quotes and the markup settings (three markups and "learn"), shared by every device. Tax
+  is not shared: each device starts at 18% and keeps its own change. The website reads it through the GitHub contents API and
   saves to it with the owner's key (a fine-grained token, Contents: read and write), which each device keeps in its
   own browser. Two devices saving at once is handled by retrying on GitHub's refusal of a stale copy.
 - `scripts/update_rates.py`: the update program (Python standard library only). Reads Dhan, Groww, Moneycontrol
