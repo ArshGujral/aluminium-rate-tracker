@@ -314,6 +314,8 @@ tbody tr:last-child td { border-bottom: 0; }
 td .art-tag { color: var(--muted); font-size: 0.78rem; }
 .is-over { color: var(--warn); font-weight: 500; }
 .is-under { color: var(--good); font-weight: 500; }
+.art-more { display: flex; justify-content: center; margin-top: -4px; }
+.art-more:has(> [hidden]) { display: none; }
 .art-foot { color: var(--muted); font-size: 0.84rem; margin: 0; max-width: 75ch; }
 
 @media (max-width: 660px) {
@@ -445,7 +447,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <div class="art-head-row"><span class="art-logo" role="img" aria-label="Xing-Z"></span><button type="button" class="art-theme" id="theme-btn" aria-label="Switch to day mode"></button></div>
     <h1>Aluminium Rate Tracker</h1>
     <p class="art-status" id="status">Loading saved rates…</p>
-    <p class="art-market" id="market"><span class="art-market-state" id="mkt-state"></span><span class="art-meta" id="mkt-hours"></span></p>
+    <p class="art-market" id="market"><span class="art-market-state" id="mkt-state"></span></p>
   </header>
 
   <p class="art-note" id="stale" hidden></p>
@@ -491,7 +493,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <div class="art-signal-text">
     <div class="art-signal-main"><span class="art-label">Buying signal</span><span class="art-pill" id="sig-pill">Loading…</span></div>
     <p class="art-hint" id="sig-why"></p>
-    <p class="art-hint" id="sig-rule">Buy: 1%+ below average and in the bottom third. Don’t buy extra: 1%+ above and in the top third. Past prices only.</p>
     </div>
     <div class="art-meter" id="sig-meter" hidden>
       <span class="art-label" id="m-title">Last 30 logged days</span>
@@ -533,8 +534,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         <tbody id="log-rows"></tbody>
       </table>
     </div>
+    <div class="art-more"><button type="button" class="is-small" id="log-more" hidden>Show more</button></div>
     <p class="art-empty" id="log-empty">No rates logged yet.</p>
-    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them. Holidays and special sessions are named, and days with no trading are listed as closed.</p>
   </section>
 
   <section class="art-sec" id="quote-sec">
@@ -569,7 +570,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 (function () {
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var S = { rates: [], quotes: [], cfg: { markupPct: 0, taxPct: 18, markup33: 0, markup38: 0, learn: true }, run: null, local: false, snap: null,
-            range: '3M', gauge: '32', showAll: false, canWrite: true, ratesLoaded: false, db: null, armed: {} };
+            range: '3M', gauge: '32', showAll: false, logDays: 10, canWrite: true, ratesLoaded: false, db: null, armed: {} };
   function $(id) { return document.getElementById(id); }
   function parseD(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
   function fmtD(s, short) { var d = parseD(s); return d.getDate() + ' ' + MON[d.getMonth()] + (short ? '' : ' ' + d.getFullYear()); }
@@ -677,7 +678,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     else next = 'opens ' + (t.wd === 5 || t.wd === 6 ? 'Monday' : t.wd === 0 ? 'Monday' : 'tomorrow') + ' ' + hhmm(open);
     st.textContent = (isOpen ? 'MCX open (trading hours) · ' : 'MCX closed · ') + next;
     st.classList.toggle('is-open', isOpen);
-    $('mkt-hours').textContent = 'Mon–Fri, 9:00 AM – ' + hhmm(close);
   }
   renderMarket(); setInterval(renderMarket, 30000);
 
@@ -815,9 +815,14 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     $('lo-val').textContent = '\u20b9' + whole(fin(lo.mcx)); $('lo-meta').textContent = fmtD(lo.date) + ' \u00b7 MCX close ' + num(lo.mcx);
     $('hi-val').textContent = '\u20b9' + whole(fin(hi.mcx)); $('hi-meta').textContent = fmtD(hi.date) + ' \u00b7 MCX close ' + num(hi.mcx);
     var byDate = {}; pts.forEach(function (p) { byDate[p.date] = p; });
+    // The newest S.logDays trading days, with the closed days between them; Show more adds 10 at a time.
+    var shown = 0, more = $('log-more');
+    more.hidden = n <= 10; more.textContent = S.logDays >= n ? 'Show fewer' : 'Show more';
     // Every calendar day in the period, newest first: trading days with their rate, the rest with why there is none.
     for (var day = parseD(pts[n - 1].date), first = parseD(pts[0].date); day >= first; day.setDate(day.getDate() - 1)) {
       var ds = iso(day), r = byDate[ds], h = HOL[ds], wd = day.getDay();
+      if (shown >= S.logDays) break;
+      if (r) shown++;
       if (!r) {
         var shut = (h && h[1] === 'closed') || wd === 0 || wd === 6, why = h ? h[0] : wd === 0 ? 'Sunday' : wd === 6 ? 'Saturday' : '';
         var cd = el('td', { class: 'c-date', text: fmtD(ds) });
@@ -842,6 +847,11 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         el('td', { class: 'is-text is-opt', text: r.contract || '' }), el('td', { class: 'is-text is-opt', text: r.source || '' })));
     }
   }
+
+  $('log-more').addEventListener('click', function () {
+    var n = rangeView().pts.length;
+    if (S.logDays >= n) { S.logDays = 10; renderLog(); $('log-sec').scrollIntoView({ block: 'start' }); } else { S.logDays += 10; renderLog(); }
+  });
 
   // Fade out the Xing-Z loading screen once rates have arrived; keep it up for one run of the animation so a fast load doesn't flash it.
   function hideLoader() {
