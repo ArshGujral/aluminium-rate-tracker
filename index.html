@@ -863,7 +863,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   // Tax is not shared: each device starts at 18% and keeps its own change.
   var QURL = 'https://api.github.com/repos/ArshGujral/aluminium-rate-tracker/contents/quotes.json';
   // The Cloudflare Worker (worker/quotes-worker.js) that saves with the PIN alone. Empty: devices save with their own key.
-  var WORKER_URL = '';
+  var WORKER_URL = 'https://alu-quotes.arshsinghgujral.workers.dev/';
   function viaWorker(body) {
     body.pin = window.xzPin ? window.xzPin() : '';
     return fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
