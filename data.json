@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-19",
+ "updatedAt": "2026-11-20",
  "config": {
   "markupPct": 33,
   "taxPct": 9,
@@ -418,7 +418,7 @@
   },
   {
    "date": "2026-11-19",
-   "mcx": 318.8,
+   "mcx": 318.95,
    "contract": "30 Nov 2026",
    "source": "Dhan",
    "closeType": "last",
@@ -436,5 +436,5 @@
    "id": "q-2026-10-23-a"
   }
  ],
- "updatedTime": "23:55"
+ "updatedTime": "00:25"
 }
