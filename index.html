@@ -534,7 +534,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         <tbody id="log-rows"></tbody>
       </table>
     </div>
-    <div class="art-more"><button type="button" class="is-small" id="log-more" hidden>Show more</button></div>
+    <div class="art-more"><button type="button" class="is-small" id="log-more" hidden>Show all</button></div>
     <p class="art-empty" id="log-empty">No rates logged yet.</p>
   </section>
 
@@ -570,7 +570,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 (function () {
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var S = { rates: [], quotes: [], cfg: { markupPct: 0, taxPct: 18, markup33: 0, markup38: 0, learn: true }, run: null, local: false, snap: null,
-            range: '3M', gauge: '32', showAll: false, logDays: 10, canWrite: true, ratesLoaded: false, db: null, armed: {} };
+            range: '3M', gauge: '32', showAll: false, logAll: false, canWrite: true, ratesLoaded: false, db: null, armed: {} };
   function $(id) { return document.getElementById(id); }
   function parseD(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
   function fmtD(s, short) { var d = parseD(s); return d.getDate() + ' ' + MON[d.getMonth()] + (short ? '' : ' ' + d.getFullYear()); }
@@ -805,7 +805,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     '2026-11-24': ['Guru Nanak Jayanti', 'evening'], '2026-12-25': ['Christmas', 'closed']
   };
   function renderLog() {
-    var body = $('log-rows'), pts = rangeView().pts, n = pts.length, i;
+    // Collapsed: the newest 10 trading days of the chart's period. Show more: every logged day since the start.
+    var body = $('log-rows'), pts = S.logAll ? S.rates : rangeView().pts, n = pts.length, i;
     body.replaceChildren();
     $('log-wrap').hidden = !n; $('log-stats').hidden = !n; $('log-empty').hidden = !!n || !S.ratesLoaded;
     if (!n) { $('log-span').textContent = ''; return; }
@@ -815,13 +816,12 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     $('lo-val').textContent = '\u20b9' + whole(fin(lo.mcx)); $('lo-meta').textContent = fmtD(lo.date) + ' \u00b7 MCX close ' + num(lo.mcx);
     $('hi-val').textContent = '\u20b9' + whole(fin(hi.mcx)); $('hi-meta').textContent = fmtD(hi.date) + ' \u00b7 MCX close ' + num(hi.mcx);
     var byDate = {}; pts.forEach(function (p) { byDate[p.date] = p; });
-    // The newest S.logDays trading days, with the closed days between them; Show more adds 10 at a time.
-    var shown = 0, more = $('log-more');
-    more.hidden = n <= 10; more.textContent = S.logDays >= n ? 'Show fewer' : 'Show more';
+    var shown = 0, more = $('log-more'), limit = S.logAll ? Infinity : 10;
+    more.hidden = !S.logAll && n <= 10 && rangeView().pts.length === S.rates.length; more.textContent = S.logAll ? 'Show fewer' : 'Show all';
     // Every calendar day in the period, newest first: trading days with their rate, the rest with why there is none.
     for (var day = parseD(pts[n - 1].date), first = parseD(pts[0].date); day >= first; day.setDate(day.getDate() - 1)) {
       var ds = iso(day), r = byDate[ds], h = HOL[ds], wd = day.getDay();
-      if (shown >= S.logDays) break;
+      if (shown >= limit) break;
       if (r) shown++;
       if (!r) {
         var shut = (h && h[1] === 'closed') || wd === 0 || wd === 6, why = h ? h[0] : wd === 0 ? 'Sunday' : wd === 6 ? 'Saturday' : '';
@@ -849,8 +849,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   }
 
   $('log-more').addEventListener('click', function () {
-    var n = rangeView().pts.length;
-    if (S.logDays >= n) { S.logDays = 10; renderLog(); $('log-sec').scrollIntoView({ block: 'start' }); } else { S.logDays += 10; renderLog(); }
+    S.logAll = !S.logAll; renderLog();
+    if (!S.logAll) $('log-sec').scrollIntoView({ block: 'start' });
   });
 
   // Fade out the Xing-Z loading screen once rates have arrived; keep it up for one run of the animation so a fast load doesn't flash it.
