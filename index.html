@@ -218,19 +218,21 @@ button.is-on:hover:not(:disabled), button.is-primary:hover:not(:disabled) { back
 @media (prefers-reduced-motion: reduce) { button { transition: none; } button:active:not(:disabled) { transform: none; } }
 .art-signal {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 14px 18px; display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 6px;
 }
+#signal .art-hint { font-size: 0.82rem; }
+#signal .art-pill { padding: 2px 11px; font-size: 0.88rem; }
 .art-signal-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 /* On wide screens the range meter fills the right of the signal card; it drops under the text on narrow ones. */
-.art-signal-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.art-signal-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 @media (min-width: 761px) {
-  .art-signal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); column-gap: 36px; align-items: center; }
-  .art-meter { border-left: 1px solid var(--line); padding-left: 32px; }
+  .art-signal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); column-gap: 28px; align-items: center; }
+  .art-meter { border-left: 1px solid var(--line); padding-left: 24px; }
 }
-.art-meter { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.art-meter { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 @media (max-width: 760px) { .art-meter { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); } }
 .art-meter[hidden] { display: none; }
-.art-meter-track { position: relative; display: flex; height: 30px; margin-top: 4px; border-radius: 7px; overflow: visible; }
+.art-meter-track { position: relative; display: flex; height: 24px; margin-top: 2px; border-radius: 7px; overflow: visible; }
 .art-meter-track .z { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
 .art-meter-track .z-buy { background: var(--good-soft); color: var(--good); border-radius: 7px 0 0 7px; }
 .art-meter-track .z-mid { background: var(--accent-soft); opacity: 0.6; }
@@ -442,7 +444,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   <header class="art-head">
     <div class="art-head-row"><span class="art-logo" role="img" aria-label="Xing-Z"></span><button type="button" class="art-theme" id="theme-btn" aria-label="Switch to day mode"></button></div>
     <h1>Aluminium Rate Tracker</h1>
-    <p class="art-sub">Aluminium winding wire, up to 32 SWG, 33 SWG and 38 SWG, priced from the MCX aluminium close.</p>
     <p class="art-status" id="status">Loading saved rates…</p>
     <p class="art-market" id="market"><span class="art-market-state" id="mkt-state"></span><span class="art-meta" id="mkt-hours"></span></p>
   </header>
@@ -490,7 +491,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <div class="art-signal-text">
     <div class="art-signal-main"><span class="art-label">Buying signal</span><span class="art-pill" id="sig-pill">Loading…</span></div>
     <p class="art-hint" id="sig-why"></p>
-    <p class="art-hint" id="sig-rule">Rule: Buy when the close is at least 1% below the average of the last 30 logged days and in the bottom third of their range. Don't buy extra when it is at least 1% above and in the top third. It compares past prices only and cannot predict the next move.</p>
+    <p class="art-hint" id="sig-rule">Buy: 1%+ below average and in the bottom third. Don’t buy extra: 1%+ above and in the top third. Past prices only.</p>
     </div>
     <div class="art-meter" id="sig-meter" hidden>
       <span class="art-label" id="m-title">Last 30 logged days</span>
@@ -538,8 +539,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
   <section class="art-sec" id="quote-sec">
     <div class="art-sec-head"><h2>Supplier quotes</h2></div>
-    <p class="art-hint">Log each wire rate a supplier quotes you. The tracker works out the markup over MCX in each quote and, when learning is on, uses the average of the last 5 quotes for a gauge as that gauge’s markup.</p>
-    <p class="art-hint" id="store-note" hidden>Quotes and markup are private and shared: only the PIN opens them, and what you add or change on your phone shows on your laptop too. Tax is set per device and starts at 18%.</p>
     <form class="art-form" id="quote-form" novalidate>
       <div class="art-field"><label for="q-date">Date</label><input type="date" id="q-date" required></div>
       <div class="art-field is-wide"><label for="q-supplier">Supplier</label><input type="text" id="q-supplier" maxlength="60" autocomplete="off"></div>
@@ -649,8 +648,8 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     if (dev <= -1 && pos <= 1 / 3) { pill.textContent = 'Buy \u2014 price is low'; pill.classList.add('is-buy'); }
     else if (dev >= 1 && pos >= 2 / 3) { pill.textContent = 'Don\u2019t buy extra \u2014 price is high'; pill.classList.add('is-wait'); }
     else { pill.textContent = 'No clear signal \u2014 price is near average'; pill.classList.add('is-hold'); }
-    why.textContent = (win[win.length - 1].closeType === 'live' ? 'Today\u2019s price so far' : 'The latest close') + ' of ' + num(last) + ' is ' + (Math.abs(dev) < 0.05 ? 'level with' : Math.abs(dev).toFixed(1) + '% ' + (dev < 0 ? 'below' : 'above')) +
-      ' the ' + num(avg) + ' average of the last ' + vals.length + ' logged days, and ' + Math.round(pos * 100) + '% of the way up their range of ' + num(lo) + ' to ' + num(hi) + '.';
+    why.textContent = (win[win.length - 1].closeType === 'live' ? 'Today ' : 'Latest ') + num(last) + ': ' + (Math.abs(dev) < 0.05 ? 'at' : Math.abs(dev).toFixed(1) + '% ' + (dev < 0 ? 'below' : 'above')) +
+      ' the ' + vals.length + '-day average, ' + Math.round(pos * 100) + '% up its range.';
     var at = function (v) { var f = hi > lo ? (v - lo) / (hi - lo) : 0.5; return 'calc(8px + ' + f + ' * (100% - 16px))'; };
     $('m-title').textContent = 'Last ' + vals.length + ' logged days';
     $('m-now').style.left = at(last); $('m-avg').style.left = at(avg);
@@ -678,7 +677,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     else next = 'opens ' + (t.wd === 5 || t.wd === 6 ? 'Monday' : t.wd === 0 ? 'Monday' : 'tomorrow') + ' ' + hhmm(open);
     st.textContent = (isOpen ? 'MCX open (trading hours) · ' : 'MCX closed · ') + next;
     st.classList.toggle('is-open', isOpen);
-    $('mkt-hours').textContent = 'Mon–Fri, 9:00 AM – ' + hhmm(close) + ' IST' + (close === 23 * 60 + 55 ? ' (11:30 PM from mid-March to early November)' : ' (11:55 PM from early November to mid-March)') + '; closed on exchange holidays.';
+    $('mkt-hours').textContent = 'Mon–Fri, 9:00 AM – ' + hhmm(close);
   }
   renderMarket(); setInterval(renderMarket, 30000);
 
@@ -981,7 +980,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         var tax = lsGet('art-tax', null);
         S.cfg.taxPct = typeof tax === 'number' && tax >= 0 && tax <= 100 ? tax : 18;
         try { localStorage.removeItem('art-cfg'); } catch (e) {} // an older version kept markup and tax together on each device
-        $('store-note').hidden = false; S.ratesLoaded = true; renderAll();
+        S.ratesLoaded = true; renderAll();
       }, function () { S.ratesLoaded = true; lock(); $('status').textContent = 'Saved rates are not available in this view.'; });
       return;
     }
