@@ -6,9 +6,15 @@
 <meta name="robots" content="noindex">
 <style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Aluminium Rate Tracker</title>
+<!-- The Xing-Z website's icon (xing-z-website: public/favicon.svg), with PNG sizes for phones: iPhone and Android tabs,
+     bookmarks and home-screen icons do not use the SVG. -->
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Alu Rates">
+<meta name="theme-color" content="#f3fbfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#050a0a" media="(prefers-color-scheme: dark)">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -907,7 +913,10 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7 7 17M17 7l1.7-1.7"/></svg>';
   var MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2z"/></svg>';
   // The button shows where it takes you: a sun in night mode, a moon in day mode.
-  function themeLabel() { var d = isDark(), b = $('theme-btn'); b.innerHTML = d ? SUN : MOON; b.setAttribute('aria-label', d ? 'Switch to day mode' : 'Switch to night mode'); b.title = d ? 'Day mode' : 'Night mode'; }
+  function themeLabel() { var d = isDark(), b = $('theme-btn');
+    // keep the phone's browser bar in the page colours when the theme is picked by hand
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', d ? '#050a0a' : '#f3fbfa'); });
+    b.innerHTML = d ? SUN : MOON; b.setAttribute('aria-label', d ? 'Switch to day mode' : 'Switch to night mode'); b.title = d ? 'Day mode' : 'Night mode'; }
   try { var st = localStorage.getItem('theme'); if (st === 'light' || st === 'dark') root.setAttribute('data-theme', st); } catch (e) {}
   $('theme-btn').addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; root.setAttribute('data-theme', next); try { localStorage.setItem('theme', next); } catch (e) {} themeLabel(); });
   themeLabel();

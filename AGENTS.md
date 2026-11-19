@@ -30,8 +30,8 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
   page the owner uses.
 - `daily-update-task.md`, `start-local.bat`: notes for the old artifact task, and a Windows script to run the
   tracker locally.
-- Favicons: `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` (the Xing-Z bolt over a price line, on the
-  loader green #1a7a6b).
+- Icons: the Xing-Z website's `favicon.svg` (Z and bolt on a dark tile), with PNG sizes for phones (`favicon-32.png`,
+  `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) and `manifest.webmanifest` for home-screen installs.
 
 ## Hard rules
 
