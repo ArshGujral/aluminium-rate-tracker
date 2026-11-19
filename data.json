@@ -418,13 +418,13 @@
   },
   {
    "date": "2026-11-19",
-   "mcx": 321.7,
+   "mcx": 320.7,
    "contract": "30 Nov 2026",
-   "source": "Moneycontrol",
+   "source": "Groww",
    "closeType": "live",
-   "asOf": "20:25",
+   "asOf": "20:55",
    "low": 308.9,
-   "high": 321.7
+   "high": 322.75
   }
  ],
  "quotes": [
@@ -437,5 +437,5 @@
    "id": "q-2026-10-23-a"
   }
  ],
- "updatedTime": "20:25"
+ "updatedTime": "20:55"
 }
