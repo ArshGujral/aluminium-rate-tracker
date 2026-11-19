@@ -12,9 +12,13 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
 ## Where things live
 
 - `index.html`: the website, served by GitHub Pages at https://arshgujral.github.io/aluminium-rate-tracker/.
-  One self-contained file (styles and script inline). It reads `data.json` and refreshes it every 3 minutes.
+  One self-contained file (styles and script inline). It reads `data.json` and `quotes.json` and refreshes both every
+  3 minutes. Colours and glass follow the Xing-Z website; the fonts stay Inter and Space Grotesk.
 - `data.json`: the rates, plus starting quotes and settings. **Written by the update program.** Edit it by hand only
   to correct a wrong rate, and say so in the commit.
+- `quotes.json`: the supplier quotes, shared by every device. The website reads it through the GitHub contents API and
+  saves to it with the owner's key (a fine-grained token, Contents: read and write), which each device keeps in its
+  own browser. Two devices saving at once is handled by retrying on GitHub's refusal of a stale copy.
 - `scripts/update_rates.py`: the update program (Python standard library only). Reads Dhan, Groww, Moneycontrol
   and MCX Live for the price, plus 5paisa for the previous close, and writes a rate only when two sources agree.
 - `.github/workflows/update-rates.yml`: runs the program and commits `data.json`. Started every 30 minutes
@@ -37,7 +41,7 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
 - **A push to `main` publishes the live site.** Push only changes the owner asked for. The workflow also commits
   `data.json` to `main` many times a day, so fetch and rebase before you push, and never force-push `main`.
 - **No secrets in the repo.** The GitHub token that lets cron-job.org start the workflow lives only in
-  cron-job.org. The PIN screen stores only the PIN's SHA-256; never write the PIN itself in code, comments,
+  cron-job.org. The key that saves quotes lives only in the owner's browsers. The PIN screen stores only the PIN's SHA-256; never write the PIN itself in code, comments,
   commits or docs.
 - The PIN screen shows on every load and after 3 minutes without activity. It keeps casual visitors out only:
   the page and `data.json` are public files.

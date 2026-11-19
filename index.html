@@ -10,10 +10,10 @@
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://db.onlinewebfonts.com" crossorigin>
-<!-- Helvetica Now Text, the Xing-Z website's typeface, from the same host the website uses; loaded without blocking the first paint -->
-<link rel="stylesheet" href="https://db.onlinewebfonts.com/c/08e020de1811ec4489f82d1247a42c09?family=Helvetica+Now+Text" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://db.onlinewebfonts.com/c/08e020de1811ec4489f82d1247a42c09?family=Helvetica+Now+Text"></noscript>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap"></noscript>
 <style>
 /* Layout: one working column. The rate formula reads left to right as an equation strip
    (MCX close, plus markup, plus tax), then the price chart, supplier quotes, and the daily log. */
@@ -39,8 +39,8 @@
   --glass-edge-strength: 0.7;
   --bar-solid: rgba(243, 251, 250, 0.72);
   --bar-shadow: rgba(20, 70, 62, 0.12);
-  --font-body: "Helvetica Now Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-body);
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --radius: 16px;
 }
 @media (prefers-color-scheme: dark) {
@@ -83,7 +83,7 @@ body {
    It only keeps casual visitors out: the page and its data.json are public files on GitHub Pages. */
 #xz-lock {
   --xbg: #050a0a; --xbase: rgba(255, 255, 255, .14); --xlit: #a0d5cd; --xhot: #fff; --xline: rgba(255, 255, 255, .1); --xink: #e8f2f0; --xmuted: rgba(232, 242, 240, .62); --xwarn: #e3a056;
-  position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: var(--xbg);
+  position: fixed; inset: 0; z-index: 9998; display: grid; place-items: center; padding: 24px; background: var(--xbg); /* under the loader, which fades into it */
   transition: opacity .35s ease, visibility .35s;
 }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) #xz-lock { --xbg: #f3fbfa; --xbase: rgba(10, 31, 28, .12); --xlit: #1a7a6b; --xhot: #229784; --xline: rgba(10, 31, 28, .14); --xink: #10211e; --xmuted: rgba(16, 33, 30, .6); --xwarn: #a8540a; } }
@@ -94,7 +94,7 @@ body {
 .xz-lock-logo { width: 150px; aspect-ratio: 873 / 357; background: var(--xlit); -webkit-mask: url(xingz-logo-white.png) center / contain no-repeat; mask: url(xingz-logo-white.png) center / contain no-repeat; margin-bottom: 6px; }
 .xz-lock-box label { font-size: 0.95rem; color: var(--xmuted); }
 .xz-lock-box input {
-  width: 100%; box-sizing: border-box; text-align: center; font: 500 1.6rem/1 var(--font-display); letter-spacing: 0.45em; padding: 12px 0 12px 0.45em;
+  width: 100%; box-sizing: border-box; text-align: center; font: 600 1.6rem/1 var(--font-display); letter-spacing: 0.45em; padding: 12px 0 12px 0.45em;
   color: var(--xink); background: linear-gradient(180deg, color-mix(in srgb, var(--xink) 7%, transparent), color-mix(in srgb, var(--xink) 2%, transparent)); border: 1px solid var(--xline); border-radius: 999px; outline: none;
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 30%, transparent), inset 0 2px 6px -3px rgba(0, 0, 0, .25);
 }
@@ -141,7 +141,7 @@ body {
 .art-theme svg { width: 20px; height: 20px; display: block; }
 .art-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
 .art-head h1 {
-  font-family: var(--font-display); font-weight: 400; font-size: 1.85rem; line-height: 1.1; letter-spacing: -0.02em;
+  font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1.2;
   margin: 0; text-wrap: balance;
 }
 .art-sub { color: var(--muted); margin: 0; }
@@ -156,9 +156,9 @@ body {
 }
 .art-term { flex: 1 1 200px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
 .art-term + .art-term { border-left: 1px solid var(--line); }
-.art-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; }
+.art-label { font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
 .art-big {
-  font-family: var(--font-display); font-weight: 500; font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.02em;
+  font-family: var(--font-display); font-weight: 600; font-size: 2.1rem; line-height: 1.15;
   font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
 }
 .art-big small { font-size: 0.95rem; font-weight: 500; color: var(--muted); font-family: var(--font-body); }
@@ -254,7 +254,7 @@ table.is-log td.c-date .art-tag.is-mark { display: inline-block; white-space: no
 .art-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .art-sec { display: flex; flex-direction: column; gap: 12px; }
 .art-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
-.art-sec h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; letter-spacing: -0.01em; margin: 0; }
+.art-sec h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin: 0; }
 .art-hint { color: var(--muted); font-size: 0.87rem; margin: 0; max-width: 65ch; }
 .art-range { display: flex; flex-wrap: wrap; gap: 6px; }
 .art-gauge { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: -14px; }
@@ -301,6 +301,11 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 .is-over { color: var(--warn); font-weight: 500; }
 .is-under { color: var(--good); font-weight: 500; }
 .art-foot { color: var(--muted); font-size: 0.84rem; margin: 0; max-width: 75ch; }
+.art-connect { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.art-connect[hidden], #q-connected[hidden] { display: none; }
+.art-connect-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.art-connect-row input { flex: 1 1 220px; min-width: 0; }
+#q-connected { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 @media (max-width: 660px) {
   body { font-size: 16px; }
   .art-page { padding-block: 18px 36px; gap: 22px; }
@@ -491,10 +496,39 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     <p class="art-hint" id="gap-note" hidden>Dashed stretch: days with no logged rate.</p>
   </section>
 
+
+  <section class="art-sec" id="log-sec">
+    <div class="art-sec-head"><h2>Daily log</h2><p class="art-hint" id="log-span"></p></div>
+    <div class="art-stats" id="log-stats" hidden>
+      <div class="art-stat"><span class="art-label">Lowest rate with tax</span><span class="art-stat-val" id="lo-val"></span><span class="art-meta" id="lo-meta"></span></div>
+      <div class="art-stat"><span class="art-label">Highest rate with tax</span><span class="art-stat-val" id="hi-val"></span><span class="art-meta" id="hi-meta"></span></div>
+    </div>
+    <div class="art-scroll" id="log-wrap" hidden>
+      <div class="art-log-head" aria-hidden="true"><span>Date<small>Occasion · day low – high</small></span><span>MCX close<small>Change</small></span><span>With tax<small>Before tax</small></span></div>
+      <table class="is-log">
+        <thead><tr>
+          <th>Date</th><th>Day low</th><th>Day high</th><th>MCX close</th><th>Change</th><th>Before tax</th><th>With tax</th><th class="is-text is-opt">Contract</th><th class="is-text is-opt">Source</th>
+        </tr></thead>
+        <tbody id="log-rows"></tbody>
+      </table>
+    </div>
+    <p class="art-empty" id="log-empty">No rates logged yet.</p>
+    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them. Holidays and special sessions are named, and days with no trading are listed as closed.</p>
+  </section>
+
   <section class="art-sec" id="quote-sec">
     <div class="art-sec-head"><h2>Supplier quotes</h2></div>
     <p class="art-hint">Log each wire rate a supplier quotes you. The tracker works out the markup over MCX in each quote and, when learning is on, uses the average of the last 5 quotes for a gauge as that gauge’s markup.</p>
-    <p class="art-hint" id="store-note" hidden>Quotes and settings you add on this website are saved on this device only.</p>
+    <p class="art-hint" id="store-note" hidden>Quotes are shared: one added on your phone shows on your laptop too. Markup and tax settings are kept on each device.</p>
+    <div class="art-connect" id="q-connect" hidden>
+      <p class="art-hint"><b>Connect this device to add or delete quotes.</b> Paste a GitHub key that can save to the
+        aluminium-rate-tracker repository (fine-grained token, Contents: read and write). It stays in this browser only.</p>
+      <form class="art-connect-row" id="q-connect-form" autocomplete="off">
+        <input type="password" id="q-key" placeholder="github_pat_…" spellcheck="false" autocomplete="off" aria-label="GitHub key">
+        <button type="submit" class="is-primary">Connect</button>
+      </form>
+    </div>
+    <p class="art-hint" id="q-connected" hidden>This device is connected. <button type="button" class="is-small" id="q-disconnect">Disconnect</button></p>
     <form class="art-form" id="quote-form" novalidate>
       <div class="art-field"><label for="q-date">Date</label><input type="date" id="q-date" required></div>
       <div class="art-field is-wide"><label for="q-supplier">Supplier</label><input type="text" id="q-supplier" maxlength="60" autocomplete="off"></div>
@@ -516,25 +550,6 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       </table>
     </div>
     <p class="art-empty" id="quote-empty">No supplier quotes logged yet.</p>
-  </section>
-
-  <section class="art-sec" id="log-sec">
-    <div class="art-sec-head"><h2>Daily log</h2><p class="art-hint" id="log-span"></p></div>
-    <div class="art-stats" id="log-stats" hidden>
-      <div class="art-stat"><span class="art-label">Lowest rate with tax</span><span class="art-stat-val" id="lo-val"></span><span class="art-meta" id="lo-meta"></span></div>
-      <div class="art-stat"><span class="art-label">Highest rate with tax</span><span class="art-stat-val" id="hi-val"></span><span class="art-meta" id="hi-meta"></span></div>
-    </div>
-    <div class="art-scroll" id="log-wrap" hidden>
-      <div class="art-log-head" aria-hidden="true"><span>Date<small>Occasion · day low – high</small></span><span>MCX close<small>Change</small></span><span>With tax<small>Before tax</small></span></div>
-      <table class="is-log">
-        <thead><tr>
-          <th>Date</th><th>Day low</th><th>Day high</th><th>MCX close</th><th>Change</th><th>Before tax</th><th>With tax</th><th class="is-text is-opt">Contract</th><th class="is-text is-opt">Source</th>
-        </tr></thead>
-        <tbody id="log-rows"></tbody>
-      </table>
-    </div>
-    <p class="art-empty" id="log-empty">No rates logged yet.</p>
-    <p class="art-hint">The log covers the same period as the chart above. Day low and high are shown where the source gave them. Holidays and special sessions are named, and days with no trading are listed as closed.</p>
   </section>
 
   <p class="art-foot">Rates are the near-month MCX aluminium futures close in ₹/kg. This is a reference for costing and negotiation, not a live quote.</p>
@@ -738,12 +753,12 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       }
       if (q.note) tr.append(td('Note', q.note, 'is-text')); else tr.append(el('td'));
       var last = el('td');
-      if (S.canWrite && (S.db || S.local)) {
+      if (S.canWrite && (S.db || (S.local && S.shared))) {
         var b = el('button', { type: 'button', class: 'is-small', text: S.armed[q.id] ? 'Confirm delete' : 'Delete' });
         b.addEventListener('click', function () {
           if (!S.armed[q.id]) { S.armed = {}; S.armed[q.id] = true; renderQuotes(); return; }
           b.disabled = true;
-          delQuote(q.id).then(function () { S.armed = {}; msg('q-msg', 'Quote deleted.'); }, function () { b.disabled = false; msg('q-msg', 'Could not delete the quote. Try again.', true); });
+          delQuote(q.id).then(function () { S.armed = {}; msg('q-msg', 'Quote deleted on all your devices.'); }, function (c) { b.disabled = false; msg('q-msg', keyFailed(c) || 'Could not delete the quote. Try again.', true); });
         });
         last.append(b);
       }
@@ -807,24 +822,82 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   function lsGet(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function normQ(x, id) { return { id: id, date: x.date, supplier: typeof x.supplier === 'string' ? x.supplier : '', rate: x.rate, mcxAtQuote: x.mcxAtQuote, gauge: x.gauge === '33' || x.gauge === '38' ? x.gauge : '32', note: typeof x.note === 'string' ? x.note : '', at: typeof x.createdAt === 'string' ? x.createdAt : '' }; }
-  function localQuotes() {
-    var gone = lsGet('art-quotes-del', []), mine = lsGet('art-quotes', []);
-    S.quotes = (S.seed || []).filter(function (q) { return gone.indexOf(q.id) < 0; }).concat(Array.isArray(mine) ? mine : [])
-      .map(function (q) { return normQ(q, q.id); }).filter(function (q) { return isDate(q.date) && okNum(q.rate); });
+  // Quotes on the website live in quotes.json in this repository, so every device sees the same list. Reading needs no
+  // key; adding and deleting go through the GitHub contents API with the owner's key, kept only in this browser.
+  var QURL = 'https://api.github.com/repos/ArshGujral/aluminium-rate-tracker/contents/quotes.json';
+  function ghKey() { try { return localStorage.getItem('art-gh-key') || ''; } catch (e) { return ''; } }
+  function b64(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function unb64(str) { return decodeURIComponent(escape(atob(String(str).replace(/\s/g, '')))); }
+  function ghRead() {
+    var h = { Accept: 'application/vnd.github+json' }, k = ghKey(); if (k) h.Authorization = 'Bearer ' + k;
+    return fetch(QURL + '?ref=main&t=' + Date.now(), { headers: h, cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw r.status; return r.json();
+    }).then(function (f) { var d = JSON.parse(unb64(f.content)); return { sha: f.sha, quotes: Array.isArray(d.quotes) ? d.quotes : [] }; })
+      .catch(function (e) {
+        if (k) throw e;
+        // Without a key the API allows 60 reads an hour; past that, read the published copy instead.
+        return fetch('quotes.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
+          .then(function (d) { return { sha: null, quotes: Array.isArray(d.quotes) ? d.quotes : [] }; });
+      });
+  }
+  function setQuotes(list) {
+    S.quotes = list.map(function (q) { return normQ(q, q.id); }).filter(function (q) { return isDate(q.date) && okNum(q.rate); });
+  }
+  // Read, change and save in one go. If another device saved in between, GitHub refuses the stale copy and we redo
+  // the change on the new one, so two devices adding at once both keep their quote.
+  function ghChange(fn, message, tries) {
+    tries = tries || 0;
+    return ghRead().then(function (cur) {
+      var list = fn(cur.quotes.slice());
+      return fetch(QURL, { method: 'PUT', headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + ghKey(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message, branch: 'main', sha: cur.sha, content: b64(JSON.stringify({ quotes: list }, null, 1) + '\n') }) })
+        .then(function (r) {
+          if ((r.status === 409 || r.status === 422) && tries < 3) return ghChange(fn, message, tries + 1);
+          if (!r.ok) throw r.status;
+          setQuotes(list); renderAll();
+        });
+    });
+  }
+  function loadQuotes() { return ghRead().then(function (cur) { setQuotes(cur.quotes); renderAll(); return cur; }, function () {}); }
+  // Quotes an older version kept on this device move into the shared list once the device is connected.
+  function moveLocalQuotes() {
+    var mine = lsGet('art-quotes', []); if (!ghKey() || !Array.isArray(mine) || !mine.length) return Promise.resolve();
+    return ghChange(function (list) {
+      var have = {}; list.forEach(function (q) { have[q.id] = true; });
+      mine.forEach(function (q) { if (q && !have[q.id]) list.push(q); }); return list;
+    }, 'Move supplier quotes from a device into the shared list').then(function () { try { localStorage.removeItem('art-quotes'); localStorage.removeItem('art-quotes-del'); } catch (e) {} });
+  }
+  function showConnect() {
+    var on = !!ghKey(); S.shared = on;
+    $('q-connect').hidden = on; $('q-connected').hidden = !on; $('quote-form').hidden = !on;
+  }
+  function keyFailed(code) {
+    if (code !== 401 && code !== 403 && code !== 404) return null;
+    try { localStorage.removeItem('art-gh-key'); } catch (e) {}
+    showConnect(); renderQuotes();
+    return 'GitHub did not accept this device’s key. Connect again with a key that can save to the repository.';
   }
   function addQuote(doc) {
     if (S.db) return S.db.collection('quotes').add(doc);
-    var mine = lsGet('art-quotes', []); doc.id = 'l' + Date.now(); mine.push(doc);
-    if (!lsSet('art-quotes', mine)) return Promise.reject();
-    localQuotes(); renderAll(); return Promise.resolve();
+    doc.id = 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    return ghChange(function (list) { list.push(doc); return list; }, 'Add supplier quote: ' + doc.date + (doc.supplier ? ', ' + doc.supplier : ''));
   }
   function delQuote(id) {
     if (S.db) return S.db.collection('quotes').doc(id).delete();
-    var mine = lsGet('art-quotes', []), kept = mine.filter(function (q) { return q.id !== id; }), ok;
-    if (kept.length !== mine.length) ok = lsSet('art-quotes', kept); else { var gone = lsGet('art-quotes-del', []); gone.push(id); ok = lsSet('art-quotes-del', gone); }
-    if (!ok) return Promise.reject();
-    localQuotes(); renderAll(); return Promise.resolve();
+    return ghChange(function (list) { return list.filter(function (q) { return q.id !== id; }); }, 'Delete supplier quote');
   }
+  $('q-connect-form').addEventListener('submit', function (e) {
+    e.preventDefault(); var k = $('q-key').value.trim(); if (!k) return;
+    try { localStorage.setItem('art-gh-key', k); } catch (x) { msg('q-msg', 'This browser would not keep the key.', true); return; }
+    $('q-key').value = ''; showConnect(); renderQuotes(); msg('q-msg', 'Checking the key…');
+    (lsGet('art-quotes', []).length ? moveLocalQuotes() : ghRead()).then(function () { return loadQuotes(); })
+      .then(function () { msg('q-msg', 'Connected. Quotes you add here appear on all your devices.'); },
+        function (c) { msg('q-msg', keyFailed(c) || 'Could not reach GitHub. Check the connection and try again.', true); });
+  });
+  $('q-disconnect').addEventListener('click', function () {
+    try { localStorage.removeItem('art-gh-key'); } catch (e) {}
+    showConnect(); renderQuotes(); msg('q-msg', 'This device is disconnected. Quotes stay visible; adding and deleting need the key again.');
+  });
 
   document.querySelectorAll('[data-range]').forEach(function (b) { b.addEventListener('click', function () { S.range = b.getAttribute('data-range'); renderChart(); renderLog(); }); });
   try { var sg = localStorage.getItem('gauge'); if (sg === '33' || sg === '38') S.gauge = sg; } catch (e) {}
@@ -869,7 +942,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     addQuote(doc).then(function () {
       $('q-save').disabled = false; $('q-rate').value = ''; $('q-mcx').value = ''; $('q-note').value = '';
       msg('q-msg', 'Quote logged at ' + num(doc.rate) + ' before tax.');
-    }, function () { $('q-save').disabled = false; msg('q-msg', 'Could not save the quote. Try again.', true); });
+    }, function (c) { $('q-save').disabled = false; msg('q-msg', keyFailed(c) || 'Could not save the quote. Try again.', true); });
   });
 
   if (window.ResizeObserver) { var lastW = 0; new ResizeObserver(function () { var w = $('chart').clientWidth; if (w !== lastW) { lastW = w; renderChart(); } }).observe($('chart')); }
@@ -884,6 +957,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         if (document.hidden) return;
         var a = document.activeElement;
         if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
+        loadQuotes(); // quotes added on another device show up here too
         fetch('data.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
           if (d.updatedAt === S.snap && d.updatedTime === S.snapTime) return;
           S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
@@ -897,7 +971,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         window.addEventListener('pageshow', function (e) { if (e.persisted) refresh(); });
         S.local = true; S.snap = isDate(d.updatedAt) ? d.updatedAt : ''; S.snapTime = /^\d{2}:\d{2}$/.test(d.updatedTime || '') ? d.updatedTime : '';
         S.rates = (d.rates || []).filter(function (r) { return isDate(r.date) && okNum(r.mcx); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-        S.seed = Array.isArray(d.quotes) ? d.quotes : []; localQuotes();
+        S.quotes = []; showConnect(); loadQuotes().then(function () { return moveLocalQuotes(); }).catch(function () {});
         var c = d.config || {}, mine = lsGet('art-cfg', {});
         ['markupPct', 'taxPct', 'markup33', 'markup38'].forEach(function (k) { if (typeof mine[k] === 'number') S.cfg[k] = mine[k]; else if (typeof c[k] === 'number') S.cfg[k] = c[k]; });
         S.cfg.learn = typeof mine.learn === 'boolean' ? mine.learn : c.learn !== false;
