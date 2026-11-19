@@ -10,41 +10,50 @@
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap"></noscript>
+<link rel="preconnect" href="https://db.onlinewebfonts.com" crossorigin>
+<!-- Helvetica Now Text, the Xing-Z website's typeface, from the same host the website uses; loaded without blocking the first paint -->
+<link rel="stylesheet" href="https://db.onlinewebfonts.com/c/08e020de1811ec4489f82d1247a42c09?family=Helvetica+Now+Text" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://db.onlinewebfonts.com/c/08e020de1811ec4489f82d1247a42c09?family=Helvetica+Now+Text"></noscript>
 <style>
 /* Layout: one working column. The rate formula reads left to right as an equation strip
    (MCX close, plus markup, plus tax), then the price chart, supplier quotes, and the daily log. */
+/* Colours and glass follow the Xing-Z website (xing-z-website: src/index.css, "Copper & Current" in teal):
+   one accent, the Xing-Z teal; text, borders and faint fills are the foreground at an alpha. */
 :root {
-  --bg: #eef1f4;
-  --surface: #ffffff;
-  --ink: #17212b;
-  --muted: #5a6876;
-  --line: #d3dae1;
-  --accent: #0d6b8c;
-  --accent-soft: rgba(13, 107, 140, 0.12);
+  --fg-rgb: 10, 31, 28;
+  --bg: #f3fbfa;
+  --surface: #feffff;
+  --ink: rgb(var(--fg-rgb));
+  --muted: rgba(var(--fg-rgb), 0.64);
+  --line: rgba(var(--fg-rgb), 0.12);
+  --accent: #1a7a6b;
+  --accent-hi: #145f53;
+  --accent-soft: rgba(26, 122, 107, 0.12);
   --good: #1f7a4d;
   --good-soft: rgba(31, 122, 77, 0.1);
   --warn: #a8540a;
   --warn-soft: rgba(168, 84, 10, 0.1);
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
-  --radius: 10px;
+  --glass-fill: rgba(255, 255, 255, 0.4);
+  --glass-edge: 30, 100, 90;
+  --glass-edge-strength: 0.7;
+  --bar-solid: rgba(243, 251, 250, 0.72);
+  --bar-shadow: rgba(20, 70, 62, 0.12);
+  --font-body: "Helvetica Now Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-body);
+  --radius: 16px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f151b; --surface: #18212a; --ink: #e5ebf1; --muted: #93a2b0; --line: #2b3743;
-    --accent: #55b6dc; --accent-soft: rgba(85, 182, 220, 0.16);
+    --fg-rgb: 255, 255, 255; --bg: #050a0a; --surface: #0b1212; --accent: #229784; --accent-hi: #a0d5cd; --accent-soft: rgba(34, 151, 132, 0.16);
     --good: #5fc291; --good-soft: rgba(95, 194, 145, 0.14); --warn: #e3a056; --warn-soft: rgba(227, 160, 86, 0.14);
+    --glass-fill: rgba(255, 255, 255, 0.01); --glass-edge: 255, 255, 255; --glass-edge-strength: 1; --bar-solid: rgba(6, 14, 13, 0.55); --bar-shadow: rgba(0, 0, 0, 0.35);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f151b; --surface: #18212a; --ink: #e5ebf1; --muted: #93a2b0; --line: #2b3743;
-  --accent: #55b6dc; --accent-soft: rgba(85, 182, 220, 0.16);
+  --fg-rgb: 255, 255, 255; --bg: #050a0a; --surface: #0b1212; --accent: #229784; --accent-hi: #a0d5cd; --accent-soft: rgba(34, 151, 132, 0.16);
   --good: #5fc291; --good-soft: rgba(95, 194, 145, 0.14); --warn: #e3a056; --warn-soft: rgba(227, 160, 86, 0.14);
+  --glass-fill: rgba(255, 255, 255, 0.01); --glass-edge: 255, 255, 255; --glass-edge-strength: 1; --bar-solid: rgba(6, 14, 13, 0.55); --bar-shadow: rgba(0, 0, 0, 0.35);
   color-scheme: dark;
 }
 body {
@@ -84,15 +93,15 @@ body {
 .xz-lock-logo { width: 150px; aspect-ratio: 873 / 357; background: var(--xlit); -webkit-mask: url(xingz-logo-white.png) center / contain no-repeat; mask: url(xingz-logo-white.png) center / contain no-repeat; margin-bottom: 6px; }
 .xz-lock-box label { font-size: 0.95rem; color: var(--xmuted); }
 .xz-lock-box input {
-  width: 100%; box-sizing: border-box; text-align: center; font: 600 1.6rem/1 var(--font-display); letter-spacing: 0.45em; padding: 12px 0 12px 0.45em;
+  width: 100%; box-sizing: border-box; text-align: center; font: 500 1.6rem/1 var(--font-display); letter-spacing: 0.45em; padding: 12px 0 12px 0.45em;
   color: var(--xink); background: linear-gradient(180deg, color-mix(in srgb, var(--xink) 7%, transparent), color-mix(in srgb, var(--xink) 2%, transparent)); border: 1px solid var(--xline); border-radius: 999px; outline: none;
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 30%, transparent), inset 0 2px 6px -3px rgba(0, 0, 0, .25);
 }
 #xz-lock input:focus, #xz-lock input:focus-visible { outline: none; }
 .xz-lock-box input:focus { border-color: var(--xlit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--xlit) 25%, transparent); }
-.xz-lock-box button { width: 100%; min-height: 46px; border: 1px solid color-mix(in srgb, var(--xlit) 70%, black); border-radius: 999px; color: var(--xbg); font: 600 1rem var(--font-body); cursor: pointer;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--xlit) 75%, white), var(--xlit));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -1px 1px rgba(0, 0, 0, .15), 0 10px 22px -12px var(--xlit); }
+.xz-lock-box button { width: 100%; min-height: 46px; border-radius: 999px; color: var(--xbg); font: 600 0.95rem var(--font-body); cursor: pointer; background: var(--xink); box-shadow: none; }
+.xz-lock-box button::before { display: none; }
+.xz-lock-box button:hover { background: color-mix(in srgb, var(--xink) 88%, transparent); }
 .xz-lock-msg { min-height: 1.3em; margin: 0; font-size: 0.88rem; color: var(--xwarn); }
 .xz-lock-box.is-wrong input { border-color: var(--xwarn); animation: xz-shake .3s; }
 @keyframes xz-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
@@ -131,7 +140,7 @@ body {
 .art-theme svg { width: 20px; height: 20px; display: block; }
 .art-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
 .art-head h1 {
-  font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1.2;
+  font-family: var(--font-display); font-weight: 400; font-size: 1.85rem; line-height: 1.1; letter-spacing: -0.02em;
   margin: 0; text-wrap: balance;
 }
 .art-sub { color: var(--muted); margin: 0; }
@@ -146,9 +155,9 @@ body {
 }
 .art-term { flex: 1 1 200px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
 .art-term + .art-term { border-left: 1px solid var(--line); }
-.art-label { font-size: 0.74rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.art-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; }
 .art-big {
-  font-family: var(--font-display); font-weight: 600; font-size: 2.1rem; line-height: 1.15;
+  font-family: var(--font-display); font-weight: 500; font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
 }
 .art-big small { font-size: 0.95rem; font-weight: 500; color: var(--muted); font-family: var(--font-body); }
@@ -171,28 +180,28 @@ button.is-primary { background: var(--accent); border-color: var(--accent); colo
 button.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 button.is-small { padding: 3px 9px; font-size: 0.82rem; }
 button:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
-/* Glass buttons, in the spirit of Apple's Liquid Glass: a translucent capsule with a bright top rim and a soft drop shadow.
-   No per-button backdrop blur: the buttons sit on solid backgrounds, so it showed nothing and slowed phones. Tokens are per theme; the selected and primary buttons are tinted with the accent. */
-:root { --g-top: rgba(255, 255, 255, .86); --g-bot: rgba(255, 255, 255, .52); --g-rim: rgba(23, 33, 43, .13); --g-hi: rgba(255, 255, 255, .95); --g-lo: rgba(23, 33, 43, .05); --g-sh: rgba(16, 24, 40, .16); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --g-top: rgba(255, 255, 255, .15); --g-bot: rgba(255, 255, 255, .05); --g-rim: rgba(255, 255, 255, .14); --g-hi: rgba(255, 255, 255, .26); --g-lo: rgba(0, 0, 0, .25); --g-sh: rgba(0, 0, 0, .55); } }
-:root[data-theme="dark"] { --g-top: rgba(255, 255, 255, .15); --g-bot: rgba(255, 255, 255, .05); --g-rim: rgba(255, 255, 255, .14); --g-hi: rgba(255, 255, 255, .26); --g-lo: rgba(0, 0, 0, .25); --g-sh: rgba(0, 0, 0, .55); }
+/* Buttons are the Xing-Z website's liquid glass (src/index.css .liquid-glass): a near-clear fill, a soft inner highlight
+   and a gradient edge that is bright at the top and bottom and fades out at the sides. No backdrop blur on buttons:
+   they sit on solid ground, so it showed nothing and slowed phones. Selected chips and the primary action are
+   solid foreground pills, as on the website. */
 button {
-  border-radius: 999px; border: 1px solid var(--g-rim); color: var(--ink);
-  background: linear-gradient(180deg, var(--g-top), var(--g-bot));
-  box-shadow: inset 0 1px 0 var(--g-hi), inset 0 -1px 1px var(--g-lo), 0 1px 2px var(--g-sh), 0 6px 14px -9px var(--g-sh);
-  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  position: relative; border-radius: 999px; border: none; color: var(--ink); background: var(--glass-fill);
+  box-shadow: inset 0 1px 1px rgba(var(--glass-edge), calc(0.1 * var(--glass-edge-strength))), 0 0 0 1px rgba(var(--fg-rgb), 0.06);
+  transition: transform .15s ease, background-color .2s ease, color .2s ease;
 }
-button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 45%, var(--g-rim)); box-shadow: inset 0 1px 0 var(--g-hi), inset 0 -1px 1px var(--g-lo), 0 2px 4px var(--g-sh), 0 10px 20px -10px var(--g-sh); }
+button::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.4px; pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(var(--glass-edge), calc(0.45 * var(--glass-edge-strength))) 0%, rgba(var(--glass-edge), calc(0.15 * var(--glass-edge-strength))) 20%,
+    rgba(var(--glass-edge), 0) 40%, rgba(var(--glass-edge), 0) 60%,
+    rgba(var(--glass-edge), calc(0.15 * var(--glass-edge-strength))) 80%, rgba(var(--glass-edge), calc(0.45 * var(--glass-edge-strength))) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+}
+button:hover:not(:disabled) { background-color: rgba(var(--fg-rgb), 0.08); }
 button:active:not(:disabled) { transform: scale(.97); }
-button.is-on {
-  color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, var(--g-top)), color-mix(in srgb, var(--accent) 12%, var(--g-bot)));
-}
-button.is-primary {
-  color: var(--surface); border-color: color-mix(in srgb, var(--accent) 70%, black);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, white), var(--accent));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 1px rgba(0, 0, 0, .15), 0 1px 2px var(--g-sh), 0 8px 18px -10px var(--accent);
-}
+button.is-on, button.is-primary { background: var(--ink); color: var(--bg); box-shadow: none; }
+button.is-on::before, button.is-primary::before { display: none; }
+button.is-on:hover:not(:disabled), button.is-primary:hover:not(:disabled) { background: rgba(var(--fg-rgb), 0.88); }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } button:active:not(:disabled) { transform: none; } }
 .art-signal {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
@@ -244,19 +253,19 @@ table.is-log td.c-date .art-tag.is-mark { display: inline-block; white-space: no
 .art-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .art-sec { display: flex; flex-direction: column; gap: 12px; }
 .art-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
-.art-sec h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; margin: 0; }
+.art-sec h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; letter-spacing: -0.01em; margin: 0; }
 .art-hint { color: var(--muted); font-size: 0.87rem; margin: 0; max-width: 65ch; }
 .art-range { display: flex; flex-wrap: wrap; gap: 6px; }
 .art-gauge { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: -14px; }
 /* The gauge picker stays at the top of the screen while scrolling, so the gauge can be changed from any section.
-   Once it sticks it gets a full-width bar behind it (.is-stuck, set by an IntersectionObserver). */
-.art-gauge { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding-block: 10px; margin-top: -10px; margin-bottom: -24px; }
+   Once it sticks it becomes the website's floating glass nav bar (.is-stuck, set by an IntersectionObserver). */
+.art-gauge { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 20; padding-block: 10px; margin-top: -10px; margin-bottom: -24px; }
 .art-gauge::before {
-  content: ""; position: absolute; z-index: -1; inset: 0 auto 0 50%; width: 100vw; transform: translateX(-50%);
-  background: var(--bg); border-bottom: 1px solid transparent; transition: border-color .15s, box-shadow .15s, background .15s;
+  content: ""; position: absolute; z-index: -1; inset: 0 -12px; border-radius: 16px;
+  background: transparent; transition: background-color .4s ease, box-shadow .4s ease;
 }
-.art-gauge.is-stuck::before { border-bottom-color: var(--line); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .35);
-  background: color-mix(in srgb, var(--bg) 68%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.art-gauge.is-stuck::before { background-color: var(--bar-solid); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 1px 1px rgba(var(--glass-edge), calc(0.1 * var(--glass-edge-strength))), 0 0 0 1px rgba(var(--fg-rgb), 0.08), 0 10px 30px var(--bar-shadow); }
 .art-gauge-mark { height: 1px; margin-bottom: -29px; } /* cancels the page gap it would otherwise add */
 .art-chart {
   position: relative; background: var(--surface); border: 1px solid var(--line);
