@@ -400,16 +400,18 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   var IDLE_MS = 180 * 1000, last = Date.now();
   try { localStorage.removeItem('art-pin'); } catch (e) {} // an older version remembered the unlock
   function hex(buf) { return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+  var current = ''; // the PIN typed at unlock, kept in memory only so saves can send it to the quotes worker
+  window.xzPin = function () { return current; };
   function lock() {
     if (!root.classList.contains('is-open')) return;
-    root.classList.remove('is-open'); pin.value = ''; msg.textContent = '';
+    current = ''; root.classList.remove('is-open'); pin.value = ''; msg.textContent = '';
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     setTimeout(function () { pin.focus(); }, 50);
   }
   function check() {
     if (!window.crypto || !crypto.subtle) { msg.textContent = 'This browser cannot check the PIN. Open the site over https.'; return; }
     crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin.value)).then(function (h) {
-      if (hex(h) === KEY) { last = Date.now(); root.classList.add('is-open'); pin.value = ''; pin.blur(); }
+      if (hex(h) === KEY) { current = pin.value; last = Date.now(); root.classList.add('is-open'); pin.value = ''; pin.blur(); }
       else {
         msg.textContent = 'Wrong PIN. Try again.'; form.classList.remove('is-wrong'); void form.offsetWidth; form.classList.add('is-wrong');
         pin.value = ''; pin.focus();
@@ -792,7 +794,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
         b.addEventListener('click', function () {
           if (!S.armed[q.id]) { S.armed = {}; S.armed[q.id] = true; renderQuotes(); return; }
           b.disabled = true;
-          delQuote(q.id).then(function () { S.armed = {}; msg('q-msg', 'Quote deleted on all your devices.'); }, function (c) { b.disabled = false; msg('q-msg', keyFailed(c) || 'Could not delete the quote. Try again.', true); });
+          delQuote(q.id).then(function () { S.armed = {}; msg('q-msg', 'Quote deleted on all your devices.'); }, function (c) { b.disabled = false; msg('q-msg', failText(c) || 'Could not delete the quote. Try again.', true); });
         });
         last.append(b);
       }
@@ -860,6 +862,17 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   // no key; saving goes through the GitHub contents API with the owner's key, kept only in this browser.
   // Tax is not shared: each device starts at 18% and keeps its own change.
   var QURL = 'https://api.github.com/repos/ArshGujral/aluminium-rate-tracker/contents/quotes.json';
+  // The Cloudflare Worker (worker/quotes-worker.js) that saves with the PIN alone. Empty: devices save with their own key.
+  var WORKER_URL = '';
+  function viaWorker(body) {
+    body.pin = window.xzPin ? window.xzPin() : '';
+    return fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok || !j.ok) throw { status: r.status, msg: j.error || 'The quotes service did not answer (' + r.status + ').' };
+        setQuotes(j.quotes || []); setMarkup(j.markup); renderAll();
+      }); }, function () { throw { msg: 'Could not reach the quotes service. Check the connection and try again.' }; });
+  }
+  function failText(c) { return (c && c.msg) || keyFailed(c); }
   function ghKey() { try { return localStorage.getItem('art-gh-key') || ''; } catch (e) { return ''; } }
   function b64(str) { return btoa(unescape(encodeURIComponent(str))); }
   function unb64(str) { return decodeURIComponent(escape(atob(String(str).replace(/\s/g, '')))); }
@@ -912,6 +925,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     }, 'Move supplier quotes from a device into the shared list').then(function () { try { localStorage.removeItem('art-quotes'); localStorage.removeItem('art-quotes-del'); } catch (e) {} });
   }
   function showConnect() {
+    if (WORKER_URL) { S.shared = true; $('q-connect').hidden = true; $('q-connected').hidden = true; $('quote-form').hidden = false; return; }
     var on = !!ghKey(); S.shared = on;
     $('q-connect').hidden = on; $('q-connected').hidden = !on; $('quote-form').hidden = !on;
   }
@@ -923,11 +937,13 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
   }
   function addQuote(doc) {
     if (S.db) return S.db.collection('quotes').add(doc);
+    if (WORKER_URL) return viaWorker({ op: 'add', quote: doc });
     doc.id = 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     return ghChange(function (list) { list.push(doc); return list; }, 'Add supplier quote: ' + doc.date + (doc.supplier ? ', ' + doc.supplier : ''));
   }
   function delQuote(id) {
     if (S.db) return S.db.collection('quotes').doc(id).delete();
+    if (WORKER_URL) return viaWorker({ op: 'delete', id: id });
     return ghChange(function (list) { return list.filter(function (q) { return q.id !== id; }); }, 'Delete supplier quote');
   }
   $('q-connect-form').addEventListener('submit', function (e) {
@@ -972,6 +988,13 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
       if (tx !== prevTax) lsSet('art-tax', tx);
       var mkChanged = mk !== prev.markupPct || ex !== prev.markup33 || m38 !== prev.markup38 || learn !== prev.learn;
       if (!mkChanged) { msg('cfg-msg', 'Tax saved on this device. Other devices keep their own tax.'); return; }
+      if (WORKER_URL) {
+        msg('cfg-msg', 'Saving markup for all your devices\u2026');
+        viaWorker({ op: 'markup', markup: { markupPct: mk, markup33: ex, markup38: m38, learn: learn } })
+          .then(function () { msg('cfg-msg', 'Markup saved for all your devices.'); },
+            function (c) { S.cfg = Object.assign({}, S.cfg, { markupPct: prev.markupPct, markup33: prev.markup33, markup38: prev.markup38, learn: prev.learn }); renderAll(); msg('cfg-msg', failText(c) || 'Could not save the markup. Try again.', true); });
+        return;
+      }
       if (!ghKey()) {
         S.cfg = Object.assign({}, S.cfg, { markupPct: prev.markupPct, markup33: prev.markup33, markup38: prev.markup38, learn: prev.learn }); renderAll();
         msg('cfg-msg', 'Markup is shared by all your devices. Connect this device under Supplier quotes, at the bottom, to change it.', true); return;
@@ -1004,7 +1027,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
     addQuote(doc).then(function () {
       $('q-save').disabled = false; $('q-rate').value = ''; $('q-mcx').value = ''; $('q-note').value = '';
       msg('q-msg', 'Quote logged at ' + num(doc.rate) + ' before tax.');
-    }, function (c) { $('q-save').disabled = false; msg('q-msg', keyFailed(c) || 'Could not save the quote. Try again.', true); });
+    }, function (c) { $('q-save').disabled = false; msg('q-msg', failText(c) || 'Could not save the quote. Try again.', true); });
   });
 
   if (window.ResizeObserver) { var lastW = 0; new ResizeObserver(function () { var w = $('chart').clientWidth; if (w !== lastW) { lastW = w; renderChart(); } }).observe($('chart')); }

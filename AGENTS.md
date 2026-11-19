@@ -20,6 +20,10 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
   is not shared: each device starts at 18% and keeps its own change. The website reads it through the GitHub contents API and
   saves to it with the owner's key (a fine-grained token, Contents: read and write), which each device keeps in its
   own browser. Two devices saving at once is handled by retrying on GitHub's refusal of a stale copy.
+- `worker/quotes-worker.js`: a Cloudflare Worker that saves quotes and markup to `quotes.json` when the request carries
+  the right PIN, so devices need no key. It holds the GitHub key as the secret `GITHUB_TOKEN`, checks `PIN_HASH`
+  (the PIN's SHA-256), and refuses a visitor for an hour after 10 wrong PINs (KV binding `ATTEMPTS`). The website
+  uses it when `WORKER_URL` in `index.html` is set; otherwise each device connects with its own key.
 - `scripts/update_rates.py`: the update program (Python standard library only). Reads Dhan, Groww, Moneycontrol
   and MCX Live for the price, plus 5paisa for the previous close, and writes a rate only when two sources agree.
 - `.github/workflows/update-rates.yml`: runs the program and commits `data.json`. Started every 30 minutes
