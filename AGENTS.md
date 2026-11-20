@@ -33,7 +33,7 @@ and a daily log. The owner uses it to cost and negotiate wire purchases. It is a
 - `daily-update-task.md`, `start-local.bat`: notes for the old artifact task, and a Windows script to run the
   tracker locally.
 - Icons: the Xing-Z Z and bolt in day mode (`favicon.svg`: teal on a light mint tile), with PNG sizes for phones (`favicon-32.png`,
-  `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) and `manifest.webmanifest` for home-screen installs.
+  `apple-touch-icon-v2.png` (the Xing-Z website's iPhone icon), `icon-192.png`, `icon-512.png`) and `manifest.webmanifest` for home-screen installs.
 
 ## Hard rules
 
