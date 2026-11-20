@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-20",
+ "updatedAt": "2026-11-21",
  "rates": [
   {
    "date": "2026-08-18",
@@ -421,7 +421,7 @@
   },
   {
    "date": "2026-11-20",
-   "mcx": 317.5,
+   "mcx": 317.25,
    "contract": "30 Nov 2026",
    "source": "Dhan",
    "closeType": "last",
@@ -429,5 +429,5 @@
    "high": 320.9
   }
  ],
- "updatedTime": "23:55"
+ "updatedTime": "00:25"
 }
