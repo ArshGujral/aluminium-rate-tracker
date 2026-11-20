@@ -141,9 +141,12 @@ body {
   .xz-spark { animation: xz-breathe 2.4s ease-in-out infinite alternate; }
 }
 .art-logo {
-  display: block; width: 118px; aspect-ratio: 873 / 357; background: var(--logo); flex: none;
+  display: block; width: 118px; aspect-ratio: 873 / 357; background: var(--logo); flex: none; cursor: pointer; transition: opacity .15s;
   -webkit-mask: url(xingz-logo-white.png) left center / contain no-repeat; mask: url(xingz-logo-white.png) left center / contain no-repeat;
 }
+/* The logo links back to the Xing-Z website. */
+a.art-logo:hover { opacity: .8; }
+a.art-logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 .art-theme { width: 42px; height: 42px; min-height: 0; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; flex: none; }
 .art-theme svg { width: 20px; height: 20px; display: block; }
 .art-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
@@ -468,7 +471,7 @@ td .art-tag { color: var(--muted); font-size: 0.78rem; }
 
 <main class="art-page">
   <header class="art-head">
-    <div class="art-head-row"><span class="art-logo" role="img" aria-label="Xing-Z"></span><button type="button" class="art-theme" id="theme-btn" aria-label="Switch to day mode"></button></div>
+    <div class="art-head-row"><a class="art-logo" href="https://arshgujral.github.io/xing-z-website/" aria-label="Xing-Z website" title="Xing-Z website"></a><button type="button" class="art-theme" id="theme-btn" aria-label="Switch to day mode"></button></div>
     <h1>Aluminium Rate Tracker</h1>
     <p class="art-status" id="status">Loading saved rates…</p>
     <p class="art-market" id="market"><span class="art-market-state" id="mkt-state"></span></p>
