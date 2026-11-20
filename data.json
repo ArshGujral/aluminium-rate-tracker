@@ -412,13 +412,23 @@
   },
   {
    "date": "2026-11-19",
-   "mcx": 318.95,
+   "mcx": 319.2,
    "contract": "30 Nov 2026",
    "source": "Dhan",
-   "closeType": "last",
+   "closeType": "official",
    "low": 308.9,
    "high": 322.75
+  },
+  {
+   "date": "2026-11-20",
+   "mcx": 315.8,
+   "contract": "30 Nov 2026",
+   "source": "Groww",
+   "closeType": "live",
+   "asOf": "09:25",
+   "low": 314.05,
+   "high": 317.0
   }
  ],
- "updatedTime": "00:25"
+ "updatedTime": "09:25"
 }
