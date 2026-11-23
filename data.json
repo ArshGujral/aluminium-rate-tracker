@@ -430,14 +430,14 @@
   },
   {
    "date": "2026-11-23",
-   "mcx": 319.05,
+   "mcx": 319.0,
    "contract": "30 Nov 2026",
    "source": "Groww",
    "closeType": "live",
-   "asOf": "13:24",
+   "asOf": "13:55",
    "low": 316.95,
    "high": 320.0
   }
  ],
- "updatedTime": "13:25"
+ "updatedTime": "13:55"
 }
