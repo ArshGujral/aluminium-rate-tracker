@@ -430,7 +430,7 @@
   },
   {
    "date": "2026-11-23",
-   "mcx": 322.8,
+   "mcx": 322.55,
    "contract": "30 Nov 2026",
    "source": "Dhan",
    "closeType": "last",
@@ -438,5 +438,5 @@
    "high": 325.0
   }
  ],
- "updatedTime": "00:25"
+ "updatedTime": "09:25"
 }
